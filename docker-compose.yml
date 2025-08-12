@@ -8,12 +8,23 @@ services:
     environment:
       - HTTP_SERVICE_LOG_LEVEL=INFO
     restart: unless-stopped
+    networks:
+      - default
 
   ngrok:
     image: ngrok/ngrok:3
     container_name: http_service_ngrok
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
-    command: http --domain=${NGROK_DOMAIN:-} http_service_app:8000
+    command: http --log=stdout --log-format=logfmt http_service_app:8000
     depends_on:
       - app
+    networks:
+      - default
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

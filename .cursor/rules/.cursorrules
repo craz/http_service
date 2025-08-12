@@ -1,0 +1,10 @@
+# Cursor Rules Index
+
+- general.md — Общие правила (auto_apply)
+- python.md — Правила для Python (auto_apply)
+- testing.md — Правила для тестов (auto_apply)
+- docker.md — Правила для Docker (auto_apply)
+- database.md — Правила для БД и миграций (auto_apply)
+- frontend.md — Правила для фронтенда (auto_apply)
+
+Добавляйте новые `.md`-файлы с YAML-шапкой (`auto_apply`, `apply_to`) по аналогии и перечисляйте их здесь.

@@ -1,0 +1,19 @@
+version: "3.9"
+services:
+  app:
+    build: .
+    container_name: http_service_app
+    ports:
+      - "8000:8000"
+    environment:
+      - HTTP_SERVICE_LOG_LEVEL=INFO
+    restart: unless-stopped
+
+  ngrok:
+    image: ngrok/ngrok:3
+    container_name: http_service_ngrok
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    command: http --domain=${NGROK_DOMAIN:-} http_service_app:8000
+    depends_on:
+      - app

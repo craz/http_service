@@ -1,0 +1,10 @@
+http_service/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+
+# IDE
+.vscode/
+.idea/

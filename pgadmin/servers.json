@@ -8,6 +8,15 @@
       "MaintenanceDB": "http_service",
       "Username": "postgres",
       "SSLMode": "prefer"
+    },
+    "2": {
+      "Name": "adm_pg",
+      "Group": "Servers",
+      "Host": "adm_pg",
+      "Port": 5432,
+      "MaintenanceDB": "avon_stage",
+      "Username": "avon_stage",
+      "SSLMode": "prefer"
     }
   }
 }

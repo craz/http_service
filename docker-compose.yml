@@ -29,13 +29,15 @@ services:
       - default
 
   pgadmin:
-    image: dpage/pgadmin4:8
+    image: dpage/pgadmin4:latest
     container_name: http_service_pgadmin
     environment:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@example.com}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-admin}
     ports:
       - "8082:80"
+    volumes:
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
     depends_on:
       - postgres
     networks:

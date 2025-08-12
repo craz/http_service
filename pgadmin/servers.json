@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "http_service_pg",
+      "Group": "Servers",
+      "Host": "http_service_pg",
+      "Port": 5432,
+      "MaintenanceDB": "http_service",
+      "Username": "postgres",
+      "SSLMode": "prefer"
+    }
+  }
+}

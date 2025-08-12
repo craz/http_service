@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "http_service"
+version = "0.1.0"
+description = "Simple HTTP processing service (FastAPI + httpx)"
+readme = "README.md"
+authors = [{ name = "craz" }]
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.110",
+  "uvicorn[standard]>=0.27",
+  "httpx>=0.27",
+  "tenacity>=8.2",
+  "pydantic>=2.6",
+  "pydantic-settings>=2.2",
+  "structlog>=24.1",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0",
+  "respx>=0.21",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q"

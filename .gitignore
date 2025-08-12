@@ -1,4 +1,4 @@
-http_service/
+/http_service/
 __pycache__/
 *.pyc
 .venv/

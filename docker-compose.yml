@@ -7,7 +7,37 @@ services:
       - "8000:8000"
     environment:
       - HTTP_SERVICE_LOG_LEVEL=INFO
+      - DATABASE_URL=postgresql+psycopg://postgres:postgres@postgres:5432/http_service
     restart: unless-stopped
+    networks:
+      - default
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: http_service_pg
+    environment:
+      - POSTGRES_DB=http_service
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - default
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: http_service_pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@example.com}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-admin}
+    ports:
+      - "8082:80"
+    depends_on:
+      - postgres
     networks:
       - default
 
@@ -21,6 +51,9 @@ services:
       - app
     networks:
       - default
+
+volumes:
+  pgdata:
 
 networks:
   default:

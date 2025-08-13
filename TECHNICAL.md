@@ -234,7 +234,8 @@ Makefile (developer UX):
 ```bash
 make up          # поднять стек
 make down        # остановить стек
-make logs        # логи
+make logs        # поток логов
+make logs-once   # разовый снимок логов (без -f)
 make ngrok-up    # только ngrok
 make ngrok-url   # показать публичный URL
 make ping        # локальный /ping

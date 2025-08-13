@@ -10,6 +10,7 @@
  - Changed: удалён устаревший ключ `version` из `docker-compose.yml` для совместимости с Docker Compose v2
  - Added: Makefile цели (`up/down/logs/ngrok-up/ngrok-url/ping/ping-remote`), healthcheck для `ngrok`
  - Added: Makefile цели (`db-shell`, `ps`, `restart`)
+ - Added: Makefile цель `logs-once`
 
 ## [0.1.1] - 2025-08-13
 - Added: `TECHNICAL.md` — техническая документация (архитектура, эндпоинты, аудит)

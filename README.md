@@ -18,6 +18,7 @@ Makefile (быстрые команды):
 make up          # поднять весь стек (подхватит .env)
 make down        # остановить стек
 make logs        # поток логов всех сервисов
+make logs-once   # единовременный снимок логов (без -f)
 make ngrok-up    # поднять только ngrok
 make ngrok-url   # показать публичный URL из 4040/api
 make ping        # локальная проверка /ping

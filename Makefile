@@ -1,6 +1,6 @@
 SHELL := /usr/bin/bash
 
-.PHONY: up down logs ngrok-up ngrok-url ping ping-remote db-shell ps restart
+.PHONY: up down logs logs-once ngrok-up ngrok-url ping ping-remote db-shell ps restart
 
 up:
 	docker compose --env-file .env up -d
@@ -10,6 +10,9 @@ down:
 
 logs:
 	docker compose logs -f --tail=200
+
+logs-once:
+	docker compose logs --tail=200
 
 ngrok-up:
 	docker compose --env-file .env up -d ngrok

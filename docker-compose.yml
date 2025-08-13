@@ -63,7 +63,8 @@ services:
     container_name: http_service_ngrok
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
-    command: http --log=stdout --log-format=logfmt http_service_app:8000
+      - NGROK_DOMAIN=${NGROK_DOMAIN:-}
+    command: http --log=stdout --log-format=logfmt --domain=${NGROK_DOMAIN:-} http_service_app:8000
     depends_on:
       - app
     networks:

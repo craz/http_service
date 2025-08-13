@@ -1,6 +1,6 @@
 SHELL := /usr/bin/bash
 
-.PHONY: up down logs logs-once ngrok-up ngrok-url ping ping-remote db-shell ps restart
+.PHONY: up down logs logs-once ngrok-up ngrok-url ping ping-remote db-shell ps restart bot-up bot-logs bot-restart bot-down
 
 up:
 	docker compose --env-file .env up -d
@@ -39,5 +39,18 @@ ps:
 
 restart:
 	docker compose restart
+
+bot-up:
+	docker compose --env-file .env up -d tg_bot
+
+bot-logs:
+	docker compose logs -f tg_bot
+
+bot-restart:
+	docker compose restart tg_bot
+
+bot-down:
+	docker compose stop tg_bot || true
+	docker compose rm -f tg_bot || true
 
 

@@ -247,6 +247,10 @@ make ping-remote # /ping на https://$NGROK_DOMAIN
 make db-shell    # psql в контейнере Postgres
 make ps          # статус docker compose
 make restart     # рестарт всех сервисов
+make bot-up      # поднять только tg_bot
+make bot-logs    # логи tg_bot
+make bot-restart # рестарт tg_bot
+make bot-down    # остановить tg_bot
 ```
 
 ### Тесты

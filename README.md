@@ -26,6 +26,10 @@ make ping-remote # проверка /ping на https://$NGROK_DOMAIN
 make db-shell    # интерактивная оболочка psql внутри контейнера Postgres
 make ps          # статус контейнеров docker compose
 make restart     # перезапуск всех сервисов
+make bot-up      # поднять только tg_bot
+make bot-logs    # логи tg_bot
+make bot-restart # рестарт tg_bot
+make bot-down    # остановить tg_bot
 
 Микросервисы в монорепозитории:
 - http_service (FastAPI) — текущий сервис

@@ -63,9 +63,15 @@ services:
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
       - NGROK_DOMAIN=${NGROK_DOMAIN:-}
-    command: http --log=stdout --log-format=logfmt http_service_app:8000
+    command: http --log=stdout --log-format=logfmt --domain=${NGROK_DOMAIN} http_service_app:8000
     ports:
       - "4040:4040"
+    healthcheck:
+      test: ["CMD", "ngrok", "version"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
     depends_on:
       - app
     networks:

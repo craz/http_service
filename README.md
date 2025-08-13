@@ -26,5 +26,9 @@ make ping-remote # проверка /ping на https://$NGROK_DOMAIN
 make db-shell    # интерактивная оболочка psql внутри контейнера Postgres
 make ps          # статус контейнеров docker compose
 make restart     # перезапуск всех сервисов
+
+Микросервисы в монорепозитории:
+- http_service (FastAPI) — текущий сервис
+- tg_bot_service (aiogram) — Telegram бот (`docker-compose` сервис `tg_bot`)
 ```
 

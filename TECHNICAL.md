@@ -12,6 +12,10 @@
 
 ### Архитектура и жизненный цикл
 
+Монорепозиторий с несколькими сервисами:
+- `src/http_service` — HTTP API (FastAPI)
+- `services/tg_bot` — Telegram-бот (aiogram, long polling)
+
 Инициализация приложения и инфраструктуры выполняется в `create_app`:
 
 ```python

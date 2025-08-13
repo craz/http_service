@@ -12,9 +12,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends build-essential
 
 COPY pyproject.toml README.md ./
 COPY src ./src
+COPY services ./services
 
 RUN python -m pip install --upgrade pip && \
-    python -m pip wheel --wheel-dir /wheels .
+    python -m pip wheel --wheel-dir /wheels . services/tg_bot
 
 FROM python:3.12-slim AS runtime
 WORKDIR /app

@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tg_bot_service"
+version = "0.1.0"
+description = "Telegram bot service (aiogram)"
+readme = "README.md"
+authors = [{ name = "craz" }]
+requires-python = ">=3.10"
+dependencies = [
+  "aiogram>=3.12",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+

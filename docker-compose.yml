@@ -77,6 +77,17 @@ services:
     networks:
       - default
 
+  tg_bot:
+    build: .
+    container_name: tg_bot_service
+    command: ["python", "-m", "tg_bot_service.main"]
+    environment:
+      - TG_BOT_TOKEN=${TG_BOT_TOKEN}
+    depends_on:
+      - app
+    networks:
+      - default
+
 volumes:
   pgdata:
   adm_pg_data:

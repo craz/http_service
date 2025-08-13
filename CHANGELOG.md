@@ -11,6 +11,7 @@
  - Added: Makefile цели (`up/down/logs/ngrok-up/ngrok-url/ping/ping-remote`), healthcheck для `ngrok`
  - Added: Makefile цели (`db-shell`, `ps`, `restart`)
  - Added: Makefile цель `logs-once`
+ - Added: каркас микросервиса Telegram-бота (`services/tg_bot`, aiogram) и сервис `tg_bot` в docker-compose
 
 ## [0.1.1] - 2025-08-13
 - Added: `TECHNICAL.md` — техническая документация (архитектура, эндпоинты, аудит)

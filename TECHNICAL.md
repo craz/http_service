@@ -239,6 +239,9 @@ make ngrok-up    # только ngrok
 make ngrok-url   # показать публичный URL
 make ping        # локальный /ping
 make ping-remote # /ping на https://$NGROK_DOMAIN
+make db-shell    # psql в контейнере Postgres
+make ps          # статус docker compose
+make restart     # рестарт всех сервисов
 ```
 
 ### Тесты

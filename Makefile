@@ -1,6 +1,6 @@
 SHELL := /usr/bin/bash
 
-.PHONY: up down logs ngrok-up ngrok-url ping ping-remote
+.PHONY: up down logs ngrok-up ngrok-url ping ping-remote db-shell ps restart
 
 up:
 	docker compose --env-file .env up -d
@@ -26,5 +26,15 @@ ping-remote:
 		echo "NGROK_DOMAIN не задан в .env"; exit 1; \
 	fi; \
 	curl -sS https://$$NGROK_DOMAIN/ping | jq .
+
+db-shell:
+	@echo "Подключение к Postgres контейнера http_service_pg..."; \
+	docker exec -it http_service_pg psql -U postgres -d http_service
+
+ps:
+	docker compose ps
+
+restart:
+	docker compose restart
 
 

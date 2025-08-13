@@ -32,3 +32,11 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 addopts = "-q"
+
+[tool.pyright]
+include = ["src", "tests", "typings"]
+venvPath = ""
+venv = ""
+typeCheckingMode = "basic"
+reportMissingImports = "warning"
+extraPaths = ["src", "typings"]

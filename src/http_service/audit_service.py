@@ -23,16 +23,17 @@ class AuditService:
         status: int,
         headers: dict[str, Any] | None,
         duration_ms: float | None,
+        response_body: str | None = None,
     ) -> None:
         session: AsyncSession
         async with self._session_factory() as session:
-            session.add(
-                RequestLog(
-                    method=method,
-                    path=path if not query else f"{path}?{query}",
-                    status=status,
-                )
+            req_log = RequestLog(
+                method=method,
+                path=path if not query else f"{path}?{query}",
+                status=status,
             )
+            session.add(req_log)
+            await session.flush()  # получим id без commit
             session.add(
                 RequestAudit(
                     method=method,
@@ -42,6 +43,8 @@ class AuditService:
                     status=status,
                     request_headers_json=headers or {},
                     duration_ms=duration_ms,
+                    response_body=response_body,
+                    request_log_id=req_log.id,
                 )
             )
             await session.commit()

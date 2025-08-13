@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     # Лимит сохранения больших полей аудита (в байтах)
     log_max_size: int = 64 * 1024
 
+    # Опциональный токен валидации входящих вебхуков (заголовок X-Webhook-Token или query ?token=...)
+    webhook_token: str | None = None
+
     class Config:
         env_prefix = "HTTP_SERVICE_"
         env_file = ".env"

@@ -6,7 +6,7 @@ from typing import AsyncIterator, Any
 
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import text, DateTime, func
+from sqlalchemy import text, DateTime, func, ForeignKey
 from sqlalchemy.dialects.postgresql import JSONB
 
 
@@ -35,6 +35,10 @@ class RequestAudit(Base):
     # новые jsonb-колонки
     request_headers_json: Mapped[dict[str, Any] | None] = mapped_column(JSONB, default=None)
     duration_ms: Mapped[float | None] = mapped_column(default=None)
+    # тело ответа (например, деталь ошибки для 4xx/5xx)
+    response_body: Mapped[str | None] = mapped_column(default=None)
+    # связь с компактным логом
+    request_log_id: Mapped[int | None] = mapped_column(ForeignKey("request_log.id"), default=None)
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -69,8 +73,29 @@ async def init_models(engine: AsyncEngine) -> None:
             """
             ALTER TABLE request_audit
                 ADD COLUMN IF NOT EXISTS request_headers_json jsonb,
-                ADD COLUMN IF NOT EXISTS duration_ms double precision;
+                ADD COLUMN IF NOT EXISTS duration_ms double precision,
+                ADD COLUMN IF NOT EXISTS response_body text,
+                ADD COLUMN IF NOT EXISTS request_log_id integer;
             CREATE INDEX IF NOT EXISTS idx_request_audit_created_at ON request_audit (created_at);
+            CREATE INDEX IF NOT EXISTS idx_request_audit_request_log_id ON request_audit (request_log_id);
+            """
+        ))
+        # добавляем FK, если его ещё нет
+        await conn.execute(text(
+            """
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_constraint
+                    WHERE conname = 'fk_request_audit_request_log_id'
+                ) THEN
+                    ALTER TABLE request_audit
+                        ADD CONSTRAINT fk_request_audit_request_log_id
+                        FOREIGN KEY (request_log_id)
+                        REFERENCES request_log(id)
+                        ON DELETE SET NULL;
+                END IF;
+            END$$;
             """
         ))
         await conn.execute(text(

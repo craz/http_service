@@ -8,6 +8,7 @@
 - Added: структура правил в `.cursor/rules/` и документация для применения правил
  - Added: первая версия технической документации `TECHNICAL.md` (архитектура, эндпоинты, аудит, примеры кода)
  - Changed: удалён устаревший ключ `version` из `docker-compose.yml` для совместимости с Docker Compose v2
+ - Added: Makefile цели (`up/down/logs/ngrok-up/ngrok-url/ping/ping-remote`), healthcheck для `ngrok`
 
 ## [0.1.1] - 2025-08-13
 - Added: `TECHNICAL.md` — техническая документация (архитектура, эндпоинты, аудит)

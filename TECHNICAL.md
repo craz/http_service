@@ -229,6 +229,18 @@ if settings.webhook_token is not None and provided_token != settings.webhook_tok
 - Через Uvicorn: `uvicorn http_service.main:app --reload`
 - Через Docker Compose: см. `docker-compose.yml` (Postgres + pgAdmin).
 
+Makefile (developer UX):
+
+```bash
+make up          # поднять стек
+make down        # остановить стек
+make logs        # логи
+make ngrok-up    # только ngrok
+make ngrok-url   # показать публичный URL
+make ping        # локальный /ping
+make ping-remote # /ping на https://$NGROK_DOMAIN
+```
+
 ### Тесты
 
 Запуск: `pytest -q`. Для интеграционных тестов потребуется доступная БД Postgres, либо моки.

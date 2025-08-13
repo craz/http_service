@@ -1,3 +1,11 @@
+.env
+.venv/
+.uvicorn.pid
+src/http_service.egg-info/
+__pycache__/
+*.pyc
+dist/
+wheels/
 /http_service/
 __pycache__/
 *.pyc

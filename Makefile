@@ -1,6 +1,6 @@
 SHELL := /usr/bin/bash
 
-.PHONY: up down logs ngrok-up ngrok-url ping
+.PHONY: up down logs ngrok-up ngrok-url ping ping-remote
 
 up:
 	docker compose --env-file .env up -d
@@ -19,5 +19,12 @@ ngrok-url:
 
 ping:
 	curl -s http://localhost:8000/ping | jq .
+
+ping-remote:
+	@NGROK_DOMAIN=$$(grep -E '^NGROK_DOMAIN=' .env | cut -d= -f2); \
+	if [ -z "$$NGROK_DOMAIN" ]; then \
+		echo "NGROK_DOMAIN не задан в .env"; exit 1; \
+	fi; \
+	curl -sS https://$$NGROK_DOMAIN/ping | jq .
 
 

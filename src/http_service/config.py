@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     # Зарезервировано под туннель на следующих шагах
     ngrok_authtoken: str | None = None
 
+    # Лимит сохранения больших полей аудита (в байтах)
+    log_max_size: int = 64 * 1024
+
     class Config:
         env_prefix = "HTTP_SERVICE_"
         env_file = ".env"

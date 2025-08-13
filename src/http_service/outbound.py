@@ -5,6 +5,7 @@ from tenacity import Retrying, stop_after_attempt, wait_exponential, retry_if_ex
 
 from .config import Settings
 from .request_context import get_request_id
+from .utils import truncate
 
 
 class OutboundClient:
@@ -33,8 +34,14 @@ class OutboundClient:
             with attempt:
                 resp = await self._client.get(url, headers=headers)
                 resp.raise_for_status()
-                return resp.json()
-        # если сюда попали, возвращаем ошибку
+                return {
+                    "_meta": {
+                        "headers": dict(resp.headers.items()),
+                        "text": truncate(resp.text, self.settings.log_max_size),
+                        "status": resp.status_code,
+                    },
+                    "json": resp.json(),
+                }
         if last_exc:
             raise last_exc
         raise RuntimeError("Failed to fetch URL without specific exception")

@@ -7,13 +7,77 @@ services:
       - "8000:8000"
     environment:
       - HTTP_SERVICE_LOG_LEVEL=INFO
+      - DATABASE_URL=postgresql+psycopg://postgres:postgres@postgres:5432/http_service
     restart: unless-stopped
+    networks:
+      - default
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: http_service_pg
+    environment:
+      - POSTGRES_DB=http_service
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - default
+
+  # Восстановление БД другого проекта из тома adm_pg_data
+  adm_pg:
+    image: postgres:16
+    container_name: adm_pg
+    environment:
+      - POSTGRES_DB=avon_stage
+      - POSTGRES_USER=avon_stage
+      - POSTGRES_PASSWORD=pass
+    ports:
+      - "5544:5432"
+    volumes:
+      - adm_pg_data:/var/lib/postgresql/data:rw
+    networks:
+      - default
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: http_service_pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@example.com}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-admin}
+    ports:
+      - "8082:80"
+    volumes:
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      - postgres
+    networks:
+      - default
 
   ngrok:
     image: ngrok/ngrok:3
     container_name: http_service_ngrok
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
-    command: http --domain=${NGROK_DOMAIN:-} http_service_app:8000
+      - NGROK_DOMAIN=${NGROK_DOMAIN:-}
+    command: http --log=stdout --log-format=logfmt --domain=${NGROK_DOMAIN:-} http_service_app:8000
     depends_on:
       - app
+    networks:
+      - default
+
+volumes:
+  pgdata:
+  adm_pg_data:
+    external: true
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

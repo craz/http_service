@@ -2,6 +2,7 @@ import respx
 import httpx
 from fastapi.testclient import TestClient
 
+# Тесты используют приложение из нового пакета (services/http_service)
 from http_service.main import app
 
 

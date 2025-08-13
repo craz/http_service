@@ -83,6 +83,7 @@ services:
     command: ["python", "-m", "tg_bot_service.main"]
     environment:
       - TG_BOT_TOKEN=${TG_BOT_TOKEN}
+      - HTTP_SERVICE_BASE_URL=http://http_service_app:8000
     depends_on:
       - app
     networks:

@@ -15,7 +15,7 @@ COPY src ./src
 COPY services ./services
 
 RUN python -m pip install --upgrade pip && \
-    python -m pip wheel --wheel-dir /wheels . services/tg_bot
+    python -m pip wheel --wheel-dir /wheels . services/tg_bot services/http_service
 
 FROM python:3.12-slim AS runtime
 WORKDIR /app
@@ -31,6 +31,7 @@ COPY --from=builder /wheels /wheels
 RUN python -m pip install --no-cache-dir /wheels/*
 
 COPY --chown=appuser:appuser src ./src
+COPY --chown=appuser:appuser services/http_service/src ./src
 
 EXPOSE 8000
 

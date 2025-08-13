@@ -12,6 +12,8 @@
  - Added: Makefile цели (`db-shell`, `ps`, `restart`)
  - Added: Makefile цель `logs-once`
  - Added: каркас микросервиса Telegram-бота (`services/tg_bot`, aiogram) и сервис `tg_bot` в docker-compose
+ - Added: эндпоинт `POST /tg/messages` и таблица `tg_message` для сохранения сообщений Telegram
+ - Added: отправка событий из бота в HTTP-сервис, зависимость `httpx` и `HTTP_SERVICE_BASE_URL` в `docker-compose.yml`
 
 ## [0.1.1] - 2025-08-13
 - Added: `TECHNICAL.md` — техническая документация (архитектура, эндпоинты, аудит)

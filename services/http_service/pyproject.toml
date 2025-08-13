@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "http_service"
+version = "0.2.0"
+description = "HTTP API service (FastAPI + SQLAlchemy + Alembic)"
+readme = "README.md"
+authors = [{ name = "craz" }]
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.110",
+  "uvicorn[standard]>=0.27",
+  "httpx>=0.27",
+  "tenacity>=8.2",
+  "pydantic>=2.6",
+  "pydantic-settings>=2.2",
+  "structlog>=24.1",
+  "sqlalchemy>=2.0",
+  "psycopg[binary]>=3.2",
+  "alembic>=1.13",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pyright]
+include = ["src", "../../tests", "../../typings"]
+typeCheckingMode = "basic"
+reportMissingImports = "warning"
+extraPaths = ["src", "../../typings"]
+
+

@@ -6,6 +6,15 @@
 - Путь к проекту: `/home/craz/Learn/http`
 - ОС/шелл: Linux, `/usr/bin/zsh`
 - Основная ветка: `main`
+
+## Монорепозиторий и сервисы
+- `src/http_service` — HTTP API (FastAPI)
+- `services/tg_bot` — Telegram-бот (aiogram)
+
+## Ветвление
+- Рабочие ветки от `main`: `feat/*`, `fix/*`, `chore/*`, `docs/*`, `ci/*`
+- Пример: `feat/tg-bot-webhooks`, `chore/guide-monorepo`
+- По завершении — PR в `main` (авто-PR ассистентом)
 - Язык общения: русский
 
 ## 2. Структура репозитория (минимум)

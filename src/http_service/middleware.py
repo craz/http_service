@@ -42,12 +42,30 @@ class RequestDbLogMiddleware(BaseHTTPMiddleware):
 
         started_at = time.perf_counter()
         status_code: int | None = None
+        response_body_text: str | None = None
         try:
             response: Response = await call_next(request)
             status_code = response.status_code
-            return response
+            # Перехват тела ответа
+            body_chunks: list[bytes] = []
+            async for chunk in response.body_iterator:  # type: ignore[attr-defined]
+                body_chunks.append(chunk)
+            body_bytes = b"".join(body_chunks)
+            response_body_text = body_bytes.decode("utf-8", errors="replace") if body_bytes else None
+            new_response = Response(
+                content=body_bytes,
+                status_code=response.status_code,
+                headers=dict(response.headers),
+                media_type=response.media_type,
+            )
+            return new_response
         except StarletteHTTPException as exc:
             status_code = exc.status_code
+            try:
+                # detail может быть dict/str
+                response_body_text = json.dumps(exc.detail) if not isinstance(exc.detail, str) else exc.detail
+            except Exception:
+                response_body_text = str(exc.detail)
             raise
         except Exception:
             status_code = 500
@@ -68,6 +86,7 @@ class RequestDbLogMiddleware(BaseHTTPMiddleware):
                     status=status_code or 0,
                     headers=headers_dict,
                     duration_ms=duration_ms,
+                    response_body=response_body_text,
                 )
             except Exception:
                 pass

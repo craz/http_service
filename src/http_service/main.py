@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query, HTTPException, Header, Request
 
 from .config import Settings
 from .logging_setup import configure_logging
@@ -25,7 +25,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     session_factory = make_session_factory(engine)
     audit = AuditService(session_factory, max_size=settings.log_max_size)
 
-    async def _get_session():
+    def _get_session():  # синхронно возвращает AsyncSession
         return session_factory()
 
     app.add_middleware(RequestIdMiddleware)
@@ -44,6 +44,29 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/ping")
     async def ping() -> dict:
         return {"status": "ok"}
+
+    @app.post("/webhook/bitrix")
+    async def webhook_bitrix(request: Request, x_webhook_token: str | None = Header(None), token: str | None = None) -> dict:
+        provided_token = x_webhook_token or token
+        ctype = request.headers.get("content-type", "").lower()
+        # поддержка application/x-www-form-urlencoded и JSON-тела
+        if provided_token is None:
+            try:
+                body_bytes = await request.body()
+                body_text = body_bytes.decode("utf-8", errors="replace") if body_bytes else ""
+                if "application/x-www-form-urlencoded" in ctype and body_text:
+                    from urllib.parse import parse_qs
+                    parsed = parse_qs(body_text, keep_blank_values=True)
+                    values = parsed.get("token")
+                    provided_token = values[0] if values else None
+                elif "application/json" in ctype and body_text:
+                    data = json.loads(body_text)
+                    provided_token = data.get("token") if isinstance(data, dict) else None
+            except Exception:
+                provided_token = provided_token or None
+        if settings.webhook_token is not None and provided_token != settings.webhook_token:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return {"ok": True}
 
     @app.get("/proxy")
     async def proxy(url: str = Query(..., description="Target URL to fetch as JSON")) -> dict:

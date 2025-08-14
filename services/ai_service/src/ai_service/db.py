@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from sqlalchemy import func, BigInteger
 from contextlib import asynccontextmanager
 from sqlalchemy.engine.url import make_url
+import psycopg
 
 
 class Base(DeclarativeBase):
@@ -38,6 +39,7 @@ def make_engine() -> AsyncEngine:
     url = os.getenv("AI_DATABASE_URL", "postgresql+psycopg://postgres:postgres@postgres:5432/ai_service")
     if url.startswith("postgresql://"):
         url = url.replace("postgresql://", "postgresql+psycopg://", 1)
+    _ensure_database_exists(url)
     return create_async_engine(url, pool_pre_ping=True)
 
 
@@ -59,5 +61,28 @@ async def session_scope(session_factory: async_sessionmaker[AsyncSession]) -> As
         except Exception:
             await session.rollback()
             raise
+
+
+def _ensure_database_exists(url: str) -> None:
+    parsed = make_url(url)
+    target_db = parsed.database or "ai_service"
+    # Подключаемся к системной БД postgres
+    admin_dsn = (
+        f"host={parsed.host or 'postgres'} "
+        f"port={parsed.port or 5432} "
+        f"user={parsed.username or 'postgres'} "
+        f"password={parsed.password or 'postgres'} "
+        f"dbname=postgres"
+    )
+    try:
+        with psycopg.connect(admin_dsn, autocommit=True) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1 FROM pg_database WHERE datname=%s", (target_db,))
+                exists = cur.fetchone() is not None
+                if not exists:
+                    cur.execute(f'CREATE DATABASE "{target_db}"')
+    except Exception:
+        # В контейнере без прав — просто продолжаем; создание таблиц упадёт явно
+        pass
 
 

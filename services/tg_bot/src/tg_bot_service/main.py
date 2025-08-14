@@ -4,17 +4,20 @@ import asyncio
 import os
 import httpx
 from aiogram import Bot, Dispatcher
-from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, BotCommand
 from aiogram.filters import CommandStart
+from aiogram.filters import Command
 
 from .db import (
     init_db,
     was_greeted,
     mark_greeted,
     get_greeting_text,
+    get_ai_system_prompt,
     upsert_user_profile,
     save_incoming_message,
     save_outgoing_message,
+    find_intent_answer,
 )
 
 # одноразовый lazy init фабрики сессий
@@ -52,16 +55,35 @@ async def _echo(message: Message) -> None:
             await upsert_user_profile(session, message)
             await save_incoming_message(session, message)
             user_id = message.from_user.id if message.from_user else 0
+            # Обработка голосовых: пока не поддерживаем распознавание речи
+            if getattr(message, "voice", None) is not None:
+                info_text = "Пока не умею распознавать голосовые. Пришлите текст."
+                await message.answer(info_text)
+                await save_outgoing_message(session, message.chat.id if message.chat else 0, user_id, info_text)
+                return
             if not await was_greeted(session, user_id):
                 greet_text = await get_greeting_text(session)
                 kb = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Сменить приветствие")]], resize_keyboard=True)
                 await message.answer(greet_text, reply_markup=kb)
                 await mark_greeted(session, user_id=user_id)
             else:
-                ai_reply = await _call_ai_service(message.text or "")
-                if ai_reply:
-                    await message.answer(ai_reply)
-                    await save_outgoing_message(session, message.chat.id if message.chat else 0, user_id, ai_reply)
+                # Сначала проверим intent-ответ из базы
+                intent_answer = await find_intent_answer(session, message.text)
+                if intent_answer:
+                    await message.answer(intent_answer)
+                    await save_outgoing_message(session, message.chat.id if message.chat else 0, user_id, intent_answer)
+                else:
+                    # Если интентов нет — зовём ИИ с системным промптом
+                    system_prompt = await get_ai_system_prompt(session)
+                    ai_reply = await _call_ai_service(
+                        message.text or "",
+                        message.chat.id if message.chat else 0,
+                        user_id,
+                        system_prompt,
+                    )
+                    if ai_reply:
+                        await message.answer(ai_reply)
+                        await save_outgoing_message(session, message.chat.id if message.chat else 0, user_id, ai_reply)
     except Exception:
         # Не срываем UX при ошибках БД
         pass
@@ -81,13 +103,14 @@ async def _send_to_http_service(message: Message) -> None:
         pass
 
 
-async def _call_ai_service(text: str) -> str | None:
+async def _call_ai_service(text: str, chat_id: int | None = None, user_id: int | None = None, system: str | None = None) -> str | None:
     base_url = os.getenv("AI_SERVICE_BASE_URL", "http://ai_service_app:8010")
     url = f"{base_url}/generate"
-    timeout = httpx.Timeout(5.0)
+    timeout = httpx.Timeout(60.0)
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
-            resp = await client.post(url, json={"text": text})
+            payload = {"text": text, "chat_id": chat_id, "user_id": user_id, "system": system}
+            resp = await client.post(url, json=payload)
             if resp.status_code == 200:
                 data = resp.json()
                 return data.get("reply")
@@ -107,7 +130,40 @@ async def run_async() -> None:
         _session_factory = await init_db()
     dp = Dispatcher()
     dp.message.register(_on_start, CommandStart())
+    # /about и /cost просто перенаправляем в intent‑поиск, чтобы ответ был из БД
+    async def _on_about(message: Message) -> None:
+        global _session_factory
+        if _session_factory is None:
+            _session_factory = await init_db()
+        async with _session_factory() as session:
+            answer = await find_intent_answer(session, "about")
+            if answer:
+                await message.answer(answer)
+                await save_outgoing_message(session, message.chat.id if message.chat else 0, message.from_user.id if message.from_user else None, answer)
+
+    async def _on_cost(message: Message) -> None:
+        global _session_factory
+        if _session_factory is None:
+            _session_factory = await init_db()
+        async with _session_factory() as session:
+            answer = await find_intent_answer(session, "cost")
+            if answer:
+                await message.answer(answer)
+                await save_outgoing_message(session, message.chat.id if message.chat else 0, message.from_user.id if message.from_user else None, answer)
+
+    dp.message.register(_on_about, Command("about"))
+    dp.message.register(_on_cost, Command("cost"))
     dp.message.register(_echo)
+    # Команды бота для меню
+    try:
+        commands = [
+            BotCommand(command="start", description="Запуск"),
+            BotCommand(command="about", description="О боте"),
+            BotCommand(command="cost", description="Стоимость"),
+        ]
+        await bot.set_my_commands(commands)
+    except Exception:
+        pass
     await dp.start_polling(bot)
 
 

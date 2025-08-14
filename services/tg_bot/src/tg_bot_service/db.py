@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import AsyncIterator
 
-from sqlalchemy import BigInteger, DateTime, Text, func, text
+from sqlalchemy import BigInteger, DateTime, Text, func, text, String, Boolean, Integer
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -34,6 +34,8 @@ class BotSettings(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     greeting_text: Mapped[str] = mapped_column(Text, default="Привет! Рад(а) познакомиться.")
+    # Системный промпт для ИИ (персона/контекст)
+    ai_system_prompt: Mapped[str | None] = mapped_column(Text, default=None)
 
 
 class UserProfile(Base):
@@ -66,6 +68,20 @@ class OutgoingMessage(Base):
     user_id: Mapped[int | None] = mapped_column(BigInteger, default=None, index=True)
     text: Mapped[str | None] = mapped_column(Text, default=None)
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Intent(Base):
+    __tablename__ = "intent"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(100))
+    match_type: Mapped[str] = mapped_column(String(20), default="substring")  # substring|equals|startswith|regex
+    pattern: Mapped[str] = mapped_column(Text)
+    answer_text: Mapped[str] = mapped_column(Text)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    priority: Mapped[int] = mapped_column(Integer, default=0, index=True)
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 def _ensure_database_exists(target_url: URL) -> None:
@@ -103,6 +119,63 @@ async def init_db() -> async_sessionmaker[AsyncSession]:
                 INSERT INTO bot_settings (id, greeting_text)
                 VALUES (1, 'Привет! Рад(а) познакомиться.')
                 ON CONFLICT (id) DO NOTHING;
+                """
+            ))
+            # добавить столбец ai_system_prompt, если отсутствует
+            await conn.execute(text(
+                """
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='bot_settings' AND column_name='ai_system_prompt'
+                    ) THEN
+                        ALTER TABLE bot_settings ADD COLUMN ai_system_prompt TEXT NULL;
+                    END IF;
+                END$$;
+                """
+            ))
+            # заполнить дефолтный системный промпт, если пусто
+            await conn.execute(text(
+                """
+                UPDATE bot_settings
+                SET ai_system_prompt = COALESCE(ai_system_prompt,
+                    'Ты — дружелюбный ассистент проекта. Отвечай кратко, по-русски, учитывая домен проекта. Если вопрос про самого бота (кто ты/что ты/чем можешь помочь), отвечай как помощник для отладки сервисов.')
+                WHERE id = 1;
+                """
+            ))
+            # индексы для intent
+            await conn.execute(text(
+                """
+                CREATE INDEX IF NOT EXISTS idx_intent_enabled_priority ON intent (enabled, priority);
+                """
+            ))
+            # сиды для intent (если пусто)
+            await conn.execute(text(
+                """
+                INSERT INTO intent (name, match_type, pattern, answer_text, enabled, priority)
+                SELECT 'who_are_you', 'substring', 'кто ты', 'Я тестовый бот для отладки сервисов (HTTP, AI, TG). Помогаю проверять маршрутизацию, БД и ответы модели.', true, 100
+                WHERE NOT EXISTS (SELECT 1 FROM intent);
+                """
+            ))
+            await conn.execute(text(
+                """
+                INSERT INTO intent (name, match_type, pattern, answer_text, enabled, priority)
+                VALUES
+                ('what_can_you_do', 'substring', 'чем можешь помочь', 'Могу принять текст, сохранить историю в БД, отправить запрос в локальную ИИ‑модель и вернуть ответ.', true, 90),
+                ('what_are_you', 'substring', 'что ты', 'Я бот‑интерфейс к микросервисам: универсальный HTTP, локальный AI (Ollama/Mistral), и админ‑панель.', true, 80)
+                ON CONFLICT DO NOTHING;
+                """
+            ))
+            # about / cost интенты, если их ещё нет (по имени)
+            await conn.execute(text(
+                """
+                INSERT INTO intent (name, match_type, pattern, answer_text, enabled, priority)
+                SELECT 'about', 'substring', 'about', 'Мы помогаем удобно тестировать и отлаживать HTTP, AI и TG‑сервисы локально.', true, 70
+                WHERE NOT EXISTS (SELECT 1 FROM intent WHERE name='about');
+                INSERT INTO intent (name, match_type, pattern, answer_text, enabled, priority)
+                SELECT 'cost', 'substring', 'cost', 'Стоимость зависит от сценария. Напишите вашу задачу — предложу варианты.', true, 60
+                WHERE NOT EXISTS (SELECT 1 FROM intent WHERE name='cost');
                 """
             ))
             # индексы для входящих сообщений
@@ -189,5 +262,41 @@ async def save_outgoing_message(session: AsyncSession, chat_id: int, user_id: in
     msg = OutgoingMessage(chat_id=chat_id, user_id=user_id, text=text)
     session.add(msg)
     await session.commit()
+
+
+async def get_ai_system_prompt(session: AsyncSession) -> str | None:
+    from sqlalchemy import select
+    res = await session.execute(select(BotSettings.ai_system_prompt).where(BotSettings.id == 1))
+    row = res.first()
+    return row[0] if row else None
+
+
+async def find_intent_answer(session: AsyncSession, text_value: str | None) -> str | None:
+    if not text_value:
+        return None
+    from sqlalchemy import select
+    from .db import Intent
+    normalized = (text_value or "").strip().lower()
+    # Получаем кандидаты, включенные, отсортированные по приоритету убыв.
+    res = await session.execute(select(Intent).where(Intent.enabled == True).order_by(Intent.priority.desc()))
+    intents = list(res.scalars())
+    import re
+    for item in intents:
+        patt = (item.pattern or "").strip().lower()
+        mt = (item.match_type or "substring").lower()
+        if not patt:
+            continue
+        try:
+            if mt == "equals" and normalized == patt:
+                return item.answer_text
+            if mt == "startswith" and normalized.startswith(patt):
+                return item.answer_text
+            if mt == "substring" and patt in normalized:
+                return item.answer_text
+            if mt == "regex" and re.search(patt, normalized):
+                return item.answer_text
+        except Exception:
+            continue
+    return None
 
 

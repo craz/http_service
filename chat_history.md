@@ -1,0 +1,7 @@
+
+--- add & commit pending changes on feat/ai-service
+[feat/ai-service 4655eb6] feat(bot,ai,monitoring): интенты/меню и system промпт; AI /generate с system; дашборд Grafana
+ 2 files changed, 31 insertions(+)
+ create mode 100644 "chat_history.md\032"
+
+--- push branch feat/ai-service

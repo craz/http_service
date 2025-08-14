@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 
 
@@ -19,9 +19,12 @@ class Settings(BaseSettings):
     # Опциональный токен валидации входящих вебхуков (заголовок X-Webhook-Token или query ?token=...)
     webhook_token: str | None = None
 
-    class Config:
-        env_prefix = "HTTP_SERVICE_"
-        env_file = ".env"
-        case_sensitive = False
+    # Pydantic v2 settings: allow unknown env vars (ignore), use prefix and .env
+    model_config = SettingsConfigDict(
+        env_prefix="HTTP_SERVICE_",
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore",
+    )
 
 

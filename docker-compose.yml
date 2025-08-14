@@ -116,6 +116,24 @@ services:
     networks:
       - default
 
+  adm_web:
+    build:
+      context: ../adm
+      dockerfile: Dockerfile
+    container_name: adm_web
+    environment:
+      - DB_HOST=adm_pg
+      - DB_PORT=5432
+      - DB_NAME=avon_stage
+      - DB_USER=avon_stage
+      - DB_PASSWORD=pass
+    depends_on:
+      - adm_pg
+    ports:
+      - "8080:80"
+    networks:
+      - default
+
 volumes:
   pgdata:
   adm_pg_data:

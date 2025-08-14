@@ -1,4 +1,4 @@
-# http_service
+# Монорепозиторий сервисов
 
 Запуск локально (Docker Compose):
 
@@ -7,10 +7,9 @@ docker compose up -d
 curl http://localhost:8000/ping
 ```
 
-Release flow:
-- Тегируйте версию `vX.Y.Z` → GitHub Actions соберёт и опубликует образ в GHCR:
-  - `ghcr.io/<owner>/http_service:X.Y.Z`
-  - `ghcr.io/<owner>/http_service:latest`
+Сервисы:
+- `services/http_service` — HTTP API (FastAPI, SQLAlchemy, Alembic)
+- `services/tg_bot` — Telegram-бот (aiogram)
 
 Makefile (быстрые команды):
 
@@ -31,8 +30,9 @@ make bot-logs    # логи tg_bot
 make bot-restart # рестарт tg_bot
 make bot-down    # остановить tg_bot
 
-Микросервисы в монорепозитории:
-- http_service (FastAPI) — текущий сервис
-- tg_bot_service (aiogram) — Telegram бот (`docker-compose` сервис `tg_bot`)
+# Миграции Alembic для http_service
+make alembic-init
+make alembic-rev MSG="init"
+make alembic-upgrade
 ```
 

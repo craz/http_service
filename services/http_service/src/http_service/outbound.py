@@ -48,3 +48,5 @@ class OutboundClient:
 
     async def aclose(self) -> None:
         await self._client.aclose()
+
+

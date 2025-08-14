@@ -40,3 +40,5 @@ class Stopwatch:
     def __exit__(self, exc_type, exc, tb) -> None:  # noqa: ANN001 - стандартная сигнатура
         if self._start is not None:
             self.duration_ms = (time.perf_counter() - self._start) * 1000.0
+
+

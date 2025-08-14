@@ -10,12 +10,10 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml README.md ./
-COPY src ./src
 COPY services ./services
 
 RUN python -m pip install --upgrade pip && \
-    python -m pip wheel --wheel-dir /wheels . services/tg_bot services/http_service
+    python -m pip wheel --wheel-dir /wheels services/tg_bot services/http_service
 
 FROM python:3.12-slim AS runtime
 WORKDIR /app
@@ -30,8 +28,7 @@ USER appuser
 COPY --from=builder /wheels /wheels
 RUN python -m pip install --no-cache-dir /wheels/*
 
-COPY --chown=appuser:appuser src ./src
-COPY --chown=appuser:appuser services/http_service/src ./src
+# только пакетные колёса, исходники не копируем — пакет ставится из wheels
 
 EXPOSE 8000
 

@@ -23,3 +23,5 @@ class Settings(BaseSettings):
         env_prefix = "HTTP_SERVICE_"
         env_file = ".env"
         case_sensitive = False
+
+

@@ -163,3 +163,5 @@ async def session_scope(session_factory: async_sessionmaker[AsyncSession]) -> As
         except Exception:
             await session.rollback()
             raise
+
+

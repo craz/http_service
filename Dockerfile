@@ -12,8 +12,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends build-essential
 
 COPY services ./services
 
+# Позволяем собирать колёса изолированно для конкретного сервиса,
+# чтобы сборка tg_bot не тянула зависимости ai_service и наоборот
+ARG BUILD_SERVICE=multi
 RUN python -m pip install --upgrade pip && \
-    python -m pip wheel --wheel-dir /wheels services/tg_bot services/http_service services/ai_service
+    if [ "$BUILD_SERVICE" = "tg_bot" ]; then \
+        python -m pip wheel --wheel-dir /wheels services/tg_bot ; \
+    elif [ "$BUILD_SERVICE" = "http_service" ]; then \
+        python -m pip wheel --wheel-dir /wheels services/http_service ; \
+    elif [ "$BUILD_SERVICE" = "ai_service" ]; then \
+        python -m pip wheel --wheel-dir /wheels services/ai_service ; \
+    else \
+        python -m pip wheel --wheel-dir /wheels services/tg_bot services/http_service services/ai_service ; \
+    fi
 
 FROM python:3.12-slim AS runtime
 WORKDIR /app

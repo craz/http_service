@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import AsyncIterator
+from typing import AsyncIterator, TYPE_CHECKING
 
 from sqlalchemy import BigInteger, DateTime, Text, func, text, String, Boolean, Integer
 from sqlalchemy.dialects.postgresql import JSONB
@@ -17,6 +17,9 @@ from sqlalchemy.engine.url import make_url, URL
 import psycopg
 from psycopg.errors import InvalidCatalogName
 
+if TYPE_CHECKING:
+    # aiogram тип для подсказок, чтобы не тянуть импорт в рантайме
+    from aiogram.types import Message  # pragma: no cover
 
 class Base(DeclarativeBase):
     pass
@@ -135,13 +138,25 @@ async def init_db() -> async_sessionmaker[AsyncSession]:
                 END$$;
                 """
             ))
-            # заполнить дефолтный системный промпт, если пусто
+            # заполнить/актуализировать системный промпт (персона бота)
             await conn.execute(text(
                 """
-                UPDATE bot_settings
-                SET ai_system_prompt = COALESCE(ai_system_prompt,
-                    'Ты — дружелюбный ассистент проекта. Отвечай кратко, по-русски, учитывая домен проекта. Если вопрос про самого бота (кто ты/что ты/чем можешь помочь), отвечай как помощник для отладки сервисов.')
-                WHERE id = 1;
+                -- Новый промпт: имитация обычного менеджера по продажам
+                DO $$
+                DECLARE
+                    prev_default TEXT := 'Ты — дружелюбный ассистент проекта. Отвечай кратко, по-русски, учитывая домен проекта. Если вопрос про самого бота (кто ты/что ты/чем можешь помочь), отвечай как помощник для отладки сервисов.';
+                    new_default  TEXT := 'Ты — обычный российский менеджер по продажам (человек), вежливый, дружелюбный, краткий. Пиши живым, разговорным языком, без оговорок вроде «как ИИ/нейросеть/модель». Не давай сухих списков — лучше 1–2 коротких абзаца и конкретное предложение/следующий шаг. Если спрашивают про цвета/коды/технические детали — сначала по‑человечески уточни задачу и предложи помощь; коды давай только по прямому запросу. Всегда отвечай по‑русски. Если тема не по делу — мягко верни к продукту и ценности.';
+                BEGIN
+                    -- 1) если пусто — ставим новый промпт
+                    UPDATE bot_settings
+                    SET ai_system_prompt = new_default
+                    WHERE id = 1 AND ai_system_prompt IS NULL;
+
+                    -- 2) если стоит старый дефолт — обновляем на новый
+                    UPDATE bot_settings
+                    SET ai_system_prompt = new_default
+                    WHERE id = 1 AND ai_system_prompt = prev_default;
+                END$$;
                 """
             ))
             # индексы для intent

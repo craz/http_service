@@ -23,6 +23,30 @@ from .db import (
 # одноразовый lazy init фабрики сессий
 _session_factory = None
 
+
+def _humanize_reply_text(text: str) -> str:
+    # Убираем роботизированные самоописания
+    lower = text.strip().lower()
+    bad_starts = [
+        "я - интеллектуальный ассистент",
+        "я — интеллектуальный ассистент",
+        "как ии",
+        "как нейросеть",
+        "как искусственный интеллект",
+        "как языковая модель",
+    ]
+    for bad in bad_starts:
+        if lower.startswith(bad):
+            # Обрезаем первую фразу до точки
+            parts = text.split(".", 1)
+            text = parts[1].strip() if len(parts) > 1 else ""
+            break
+    # Меньше канцелярита/списков: сжимаем лишние переносы и буллеты
+    text = text.replace("\n- ", "\n").replace("• ", "")
+    # Без извинений по умолчанию
+    text = text.replace("Извините, ", "")
+    return text.strip()
+
 async def _on_start(message: Message) -> None:
     # Приветствие при /start — отправляем и сохраняем в БД бота
     global _session_factory
@@ -82,11 +106,13 @@ async def _echo(message: Message) -> None:
                         system_prompt,
                     )
                     if ai_reply:
-                        await message.answer(ai_reply)
-                        await save_outgoing_message(session, message.chat.id if message.chat else 0, user_id, ai_reply)
+                        ai_reply_human = _humanize_reply_text(ai_reply)
+                        await message.answer(ai_reply_human)
+                        await save_outgoing_message(session, message.chat.id if message.chat else 0, user_id, ai_reply_human)
                     else:
                         # Резервный ответ при недоступности ИИ или ошибке
-                        fallback_text = "Мы приняли ваш запрос и сможем ответить позже."
+                        # Формулируем более «человечный» фолбэк в стиле менеджера
+                        fallback_text = "Приняли ваш запрос — вернусь с ответом чуть позже. Если важно срочно, напишите, пожалуйста, что именно нужно закрыть сейчас."
                         await message.answer(fallback_text)
                         await save_outgoing_message(
                             session,

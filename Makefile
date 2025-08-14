@@ -1,6 +1,6 @@
 SHELL := /usr/bin/bash
 
-.PHONY: up down logs logs-once ngrok-up ngrok-url ping ping-remote db-shell ps restart bot-up bot-logs bot-restart bot-down alembic-init alembic-rev alembic-upgrade alembic-downgrade alembic-stamp-head migrate
+.PHONY: up down logs logs-once ngrok-up ngrok-url ping ping-remote db-shell ps restart bot-up bot-logs bot-restart bot-down alembic-init alembic-rev alembic-upgrade alembic-downgrade alembic-stamp-head migrate alembic-stamp-head-docker
 
 up:
 	docker compose --env-file .env up -d
@@ -73,4 +73,13 @@ migrate: alembic-rev alembic-upgrade
 
 alembic-stamp-head:
 	@cd services/http_service && ALEMBIC_CONFIG=alembic.ini alembic stamp head
+
+# Stamp head через одноразовый контейнер python, если alembic не установлен локально
+alembic-stamp-head-docker:
+	@docker run --rm \
+		--network http_default \
+		-v $(PWD)/services/http_service:/work \
+		-w /work \
+		python:3.12-slim \
+		bash -lc "python -m pip install --no-cache-dir alembic sqlalchemy psycopg[binary] >/dev/null && PYTHONPATH=./src alembic -c alembic.ini stamp head && echo 'Stamped head'"
 

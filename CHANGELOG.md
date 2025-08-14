@@ -15,6 +15,7 @@
  - Changed: перенесён `http_service` в `services/http_service`, добавлен каркас Alembic и разнесены роутеры
  - Added: эндпоинт `POST /tg/messages` и таблица `tg_message` для сохранения сообщений Telegram
  - Added: отправка событий из бота в HTTP-сервис, зависимость `httpx` и `HTTP_SERVICE_BASE_URL` в `docker-compose.yml`
+  - Added: продуктовые требования `PRODUCT_REQUIREMENTS.md` (User Story, Use Case, архитектура, эпики, roadmap)
 
 ## [0.1.1] - 2025-08-13
 - Added: `TECHNICAL.md` — техническая документация (архитектура, эндпоинты, аудит)

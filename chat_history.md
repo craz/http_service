@@ -10215,4 +10215,10 @@ services/http_service/src/http_service/main.py:23
 Ваша ветка опережает «origin/feat/adm-copy-internal» на 2 коммита.
   (используйте «git push», чтобы опубликовать ваши локальные коммиты)
 
---- step: apply admin copy manually on feat/adm-copy-internal
+--- step: apply admin copy manually on feat/adm-copy-internal[feat/adm-copy-internal f512eff] feat(adm_web): локальная копия админки в services/adm_web; compose собирает из локальной копии
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+--- step: push feat/adm-copy-internalbranch 'feat/adm-copy-internal' set up to track 'origin/feat/adm-copy-internal'.
+
+--- step: switch to feat/ai-service
+--- step: revert admin copy on feat/ai-service (manual)

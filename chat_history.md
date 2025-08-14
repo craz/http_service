@@ -22653,4 +22653,5 @@ services/http_service/src/http_service/main.py:23
 121:      context: ./services/adm_web
 [ai-service] services/adm_web: exists
 
---- finalize: switch to feat/ai-service and ensure no local adm copy
+--- finalize: switch to feat/ai-service and ensure no local adm copy[feat/adm-copy-internal bcadd72] chore(history): журнал перед окончательным переключением
+ 1 file changed, 2062 insertions(+), 1 deletion(-)

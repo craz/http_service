@@ -118,7 +118,7 @@ services:
 
   adm_web:
     build:
-      context: ./services/adm_web
+      context: ../adm
       dockerfile: Dockerfile
     container_name: adm_web
     environment:

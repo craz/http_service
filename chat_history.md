@@ -7606,3 +7606,32 @@ origin	https://github.com/craz/http_service.git (push)
 181:  adm_pg_data:
 
 --- add & commit pending changes on feat/ai-service
+[feat/ai-service a22d07b] feat(bot,ai,monitoring): интенты/меню и system промпт; AI /generate с system; дашборд Grafana
+ 10 files changed, 3360 insertions(+), 12 deletions(-)
+ create mode 100644 monitoring/grafana/provisioning/dashboards/cursor.json
+ create mode 100644 monitoring/grafana/provisioning/dashboards/dashboards.yml
+ create mode 100644 monitoring/grafana/provisioning/datasources/datasource.yml
+ create mode 100644 monitoring/loki-config.yml
+ create mode 100644 monitoring/promtail-config.yml
+
+--- push branch feat/ai-service
+branch 'feat/ai-service' set up to track 'origin/feat/ai-service'.
+
+--- switch to main & pull
+Уже актуально.
+
+--- merge feat/ai-service into main (no-ff)
+Уже актуально.
+
+--- push main
+
+--- verify adm services present after merge
+30:  # Восстановление БД другого проекта из тома adm_pg_data
+31:  adm_pg:
+33:    container_name: adm_pg
+41:      - adm_pg_data:/var/lib/postgresql/data:rw
+119:  adm_web:
+123:    container_name: adm_web
+125:      - DB_HOST=adm_pg
+131:      - adm_pg
+181:  adm_pg_data:

@@ -84,6 +84,16 @@ async def _echo(message: Message) -> None:
                     if ai_reply:
                         await message.answer(ai_reply)
                         await save_outgoing_message(session, message.chat.id if message.chat else 0, user_id, ai_reply)
+                    else:
+                        # Резервный ответ при недоступности ИИ или ошибке
+                        fallback_text = "Мы приняли ваш запрос и сможем ответить позже."
+                        await message.answer(fallback_text)
+                        await save_outgoing_message(
+                            session,
+                            message.chat.id if message.chat else 0,
+                            user_id,
+                            fallback_text,
+                        )
     except Exception:
         # Не срываем UX при ошибках БД
         pass

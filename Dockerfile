@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends build-essential
 COPY services ./services
 
 RUN python -m pip install --upgrade pip && \
-    python -m pip wheel --wheel-dir /wheels services/tg_bot services/http_service
+    python -m pip wheel --wheel-dir /wheels services/tg_bot services/http_service services/ai_service
 
 FROM python:3.12-slim AS runtime
 WORKDIR /app

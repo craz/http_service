@@ -1,6 +1,6 @@
-## Техническая документация: http_service
+## Техническая документация
 
-### Обзор
+### Обзор: HTTP‑сервис
 
 Сервис на базе FastAPI для обработки HTTP-запросов, проксирования внешних запросов и ведения расширенного аудита в PostgreSQL. Основные задачи:
 
@@ -16,7 +16,7 @@
 - `src/http_service` — HTTP API (FastAPI)
 - `services/tg_bot` — Telegram-бот (aiogram, long polling)
 
-Инициализация приложения и инфраструктуры выполняется в `create_app`:
+Инициализация приложения и инфраструктуры (упрощённо):
 
 ```python
 from fastapi import FastAPI
@@ -49,7 +49,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
 Точки расширения: логирование, middlewares, настройки ретраев и лимиты аудита.
 
-### Конфигурация
+### Конфигурация HTTP‑сервиса
 
 Конфигурация через Pydantic Settings с префиксом переменных окружения `HTTP_SERVICE_`:
 
@@ -69,7 +69,7 @@ class Settings(BaseSettings):
 
 Ключевые параметры: таймауты и ретраи для httpx, размер среза больших полей, опциональный токен вебхуков.
 
-### Middleware
+### Middleware HTTP‑сервиса
 
 1) RequestIdMiddleware — устанавливает и возвращает `X-Request-ID`:
 
@@ -119,7 +119,7 @@ class RequestDbLogMiddleware(BaseHTTPMiddleware):
             )
 ```
 
-### Внешние вызовы: OutboundClient
+### Внешние вызовы: OutboundClient (HTTP‑сервис)
 
 Асинхронный клиент с ретраями и пробросом `X-Request-ID` во внешние запросы.
 
@@ -139,7 +139,7 @@ class OutboundClient:
         }
 ```
 
-### Аудит: модели и сервис
+### Аудит: модели и сервис (HTTP‑сервис)
 
 Схема БД (основное):
 
@@ -198,7 +198,7 @@ class AuditService:
         await session.commit()
 ```
 
-### Эндпоинты
+### Эндпоинты HTTP‑сервиса
 
 - GET `/ping` — healthcheck.
 - POST `/webhook/bitrix` — валидация входящего запроса по токену (заголовок `X-Webhook-Token`, query `?token=...`, либо тело для `application/x-www-form-urlencoded` и `application/json`). Возвращает `401` при несовпадении с `Settings.webhook_token`.
@@ -216,19 +216,19 @@ if settings.webhook_token is not None and provided_token != settings.webhook_tok
     raise HTTPException(status_code=401, detail="Invalid token")
 ```
 
-### Контекст запроса и утилиты
+### Контекст запроса и утилиты (HTTP‑сервис)
 
 - `request_context`: хранение `request_id` в `ContextVar`, генерация UUIDv4.
 - `utils.Stopwatch`: измерение времени секций кода (мс).
 - `utils.to_json_safe` и `utils.truncate`: безопасная сериализация и ограничение размера текста для аудита.
 
-### Инициализация БД и миграции
+### Инициализация БД и миграции (HTTP‑сервис)
 
 При старте выполняется `init_models(engine)`: создание таблиц, добавление недостающих колонок/индексов (`IF NOT EXISTS`), мягкое заполнение JSONB из старых текстовых колонок.
 
 Подключение: `DATABASE_URL` (формат `postgresql+psycopg://`), авто-конвертация `postgresql://` в async-URL.
 
-### Локальный запуск
+### Локальный запуск (HTTP‑сервис)
 
 - Через Uvicorn: `uvicorn http_service.main:app --reload`
 - Через Docker Compose: см. `docker-compose.yml` (Postgres + pgAdmin).
@@ -253,11 +253,87 @@ make bot-restart # рестарт tg_bot
 make bot-down    # остановить tg_bot
 ```
 
-### Тесты
+### Тесты (общие)
 
 Запуск: `pytest -q`. Для интеграционных тестов потребуется доступная БД Postgres, либо моки.
 
-### Расширение
+### Расширение HTTP‑сервиса
+
+---
+
+### Telegram‑бот (сервис `tg_bot`)
+
+Стек: `aiogram`, SQLAlchemy Async, PostgreSQL.
+
+Функции:
+- Приветствие при `/start` и при первом сообщении после старта (сохранение статуса приветствия в `user_state`).
+- Хранение профилей (`user_profile`), входящих (`incoming_message`) и исходящих (`outgoing_message`) сообщений.
+- Система интентов (`intent`): `match_type` (substring|equals|startswith|regex), `pattern`, `answer_text`, `priority`, `enabled`.
+- Системный промпт (`bot_settings.ai_system_prompt`) — передаётся в `ai_service`.
+- Меню команд `/start`, `/about`, `/cost` (через `set_my_commands`).
+
+Схема ключевых таблиц:
+```sql
+-- сокращённо
+CREATE TABLE bot_settings (
+  id serial primary key,
+  greeting_text text,
+  ai_system_prompt text
+);
+
+CREATE TABLE intent (
+  id serial primary key,
+  name varchar(100),
+  match_type varchar(20),
+  pattern text,
+  answer_text text,
+  enabled bool,
+  priority int,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+```
+
+Алгоритм ответа:
+1) Сохраняем входящее сообщение и профиль.
+2) Пытаемся найти intent по тексту — отвечаем, если найден.
+3) Иначе — вызываем `ai_service` с `{text, chat_id, user_id, system}` и сохраняем ответ.
+
+---
+
+### AI‑сервис (сервис `ai_service`)
+
+Стек: FastAPI, SQLAlchemy Async, PostgreSQL, Ollama.
+
+Эндпоинты:
+- `POST /generate` — тело `{text, chat_id?, user_id?, system?}` → сохраняет system/user, вызывает Ollama, сохраняет assistant, возвращает `reply`.
+- `GET /health` — проверка доступности Ollama (`/api/tags`).
+
+Вызов Ollama:
+```python
+payload = {"model": model, "prompt": prompt, "stream": False}
+if system:
+    payload["system"] = system
+```
+
+Схема БД:
+```sql
+CREATE TABLE ai_session (
+  id serial primary key,
+  chat_id bigint not null,
+  user_id bigint,
+  created_at timestamptz default now()
+);
+
+CREATE TABLE ai_message (
+  id serial primary key,
+  session_id int not null,
+  role text not null, -- system|user|assistant
+  text text not null,
+  created_at timestamptz default now()
+);
+```
+
 
 - Добавляйте новые middlewares для сквозных concerns (трейсинг, аутентификация)
 - Расширяйте `AuditService` дополнительными полями/таблицами и метриками

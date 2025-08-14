@@ -7672,4 +7672,248 @@ services/http_service/src/http_service/main.py:23
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 
---- finalize chat_history commit before checkout
+--- finalize chat_history commit before checkout[feat/ai-service 6ac99cc] chore(history): дописана история перед переключением на main
+ 1 file changed, 37 insertions(+), 1 deletion(-)
+
+--- switch to main
+--- pull origin/main (ff-only)Уже актуально.
+
+--- run tests on main# гарантируем, что Postgres из compose поднят
+docker compose --env-file .env up -d postgres
+# прогон pytest в одноразовом контейнере Python, подключённом к сети compose
+docker run --rm \
+	--network http_default \
+	-v /home/craz/Learn/http:/work \
+	-w /work \
+	python:3.12-slim \
+		bash -lc "python -m pip install --no-cache-dir -e services/tg_bot -e services/http_service pytest pytest-asyncio pytest-faker faker respx >/dev/null && PYTHONPATH=services/tg_bot/src:services/http_service/src TG_TEST_PGHOST=http_service_pg TG_TEST_PGPORT=5432 pytest -q"
+.....                                                                    [100%]
+=============================== warnings summary ===============================
+services/http_service/src/http_service/main.py:23
+  /work/services/http_service/src/http_service/main.py:23: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+../usr/local/lib/python3.12/site-packages/fastapi/applications.py:4495
+  /usr/local/lib/python3.12/site-packages/fastapi/applications.py:4495: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+--- check adm services in docker-compose.yml30:  # Восстановление БД другого проекта из тома adm_pg_data
+31:  adm_pg:
+33:    container_name: adm_pg
+41:      - adm_pg_data:/var/lib/postgresql/data:rw
+119:  adm_web:
+123:    container_name: adm_web
+125:      - DB_HOST=adm_pg
+131:      - adm_pg
+181:  adm_pg_data:
+
+--- compose ps beforeNAME               IMAGE                COMMAND                  SERVICE    CREATED        STATUS              PORTS
+http_service_app   http-app             "python -m uvicorn h…"   app        8 hours ago    Up About a minute   0.0.0.0:8000->8000/tcp, :::8000->8000/tcp
+http_service_pg    postgres:16-alpine   "docker-entrypoint.s…"   postgres   34 hours ago   Up 2 minutes        0.0.0.0:5432->5432/tcp, :::5432->5432/tcp
+
+--- ensure adm_pg is up
+--- build adm_web (if needed)#0 building with "default" instance using docker driver
+
+#1 [adm_web internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.97kB done
+#1 DONE 0.0s
+
+#2 [adm_web internal] load metadata for docker.io/library/composer:latest
+#2 DONE 0.0s
+
+#3 [adm_web internal] load metadata for docker.io/library/php:8.3-apache
+#3 DONE 0.0s
+
+#4 [adm_web internal] load .dockerignore
+#4 transferring context: 98B done
+#4 DONE 0.0s
+
+#5 [adm_web stage-0  1/12] FROM docker.io/library/php:8.3-apache
+#5 DONE 0.0s
+
+#6 [adm_web] FROM docker.io/library/composer:latest
+#6 DONE 0.0s
+
+#7 [adm_web internal] load build context
+#7 transferring context: 947.80kB 0.8s done
+#7 DONE 0.9s
+
+#8 [adm_web stage-0  3/12] RUN docker-php-ext-install     pdo_mysql     pdo_pgsql     mbstring     exif     pcntl     bcmath     gd     zip
+#8 CACHED
+
+#9 [adm_web stage-0  5/12] RUN a2enmod rewrite
+#9 CACHED
+
+#10 [adm_web stage-0  6/12] COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+#10 CACHED
+
+#11 [adm_web stage-0  7/12] WORKDIR /var/www/html
+#11 CACHED
+
+#12 [adm_web stage-0 10/12] RUN mkdir -p runtime web/assets     && chown -R www-data:www-data runtime web/assets     && chmod -R 777 runtime/     && chmod -R 777 web/assets/     && chmod 755 yii
+#12 CACHED
+
+#13 [adm_web stage-0  9/12] RUN composer install --no-dev --optimize-autoloader
+#13 CACHED
+
+#14 [adm_web stage-0  2/12] RUN apt-get update && apt-get install -y     git     curl     libpng-dev     libonig-dev     libxml2-dev     libzip-dev     libpq-dev     zip     unzip     libmagickwand-dev     && rm -rf /var/lib/apt/lists/*
+#14 CACHED
+
+#15 [adm_web stage-0 11/12] RUN sed -i 's!/var/www/html!/var/www/html/web!g' /etc/apache2/sites-available/000-default.conf     && echo '<Directory /var/www/html/web>\n    AllowOverride All\n    Require all granted\n    DirectoryIndex index.php index.html\n    </Directory>\n    \n    <FilesMatch "\.php$">\n    SetHandler application/x-httpd-php\n    </FilesMatch>' > /etc/apache2/conf-available/docker-php.conf     && a2enconf docker-php
+#15 CACHED
+
+#16 [adm_web stage-0  8/12] COPY . .
+#16 CACHED
+
+#17 [adm_web stage-0  4/12] RUN pecl install imagick && docker-php-ext-enable imagick
+#17 CACHED
+
+#18 [adm_web stage-0 12/12] RUN chown -R www-data:www-data /var/www/html
+#18 CACHED
+
+#19 [adm_web] exporting to image
+#19 exporting layers done
+#19 writing image sha256:a3307ca487ff8d7a430fa3d2b3c198c8788d8689ce1f4691f3b4adf87b44a002 done
+#19 naming to docker.io/library/http-adm_web
+#19 naming to docker.io/library/http-adm_web done
+#19 DONE 0.0s
+
+#20 [adm_web] resolving provenance for metadata file
+#20 DONE 0.0s
+
+--- up adm_web
+--- compose ps afterNAME               IMAGE                COMMAND                  SERVICE    CREATED        STATUS                  PORTS
+adm_pg             postgres:16          "docker-entrypoint.s…"   adm_pg     24 hours ago   Up 1 second             0.0.0.0:5544->5432/tcp, [::]:5544->5432/tcp
+adm_web            http-adm_web         "docker-php-entrypoi…"   adm_web    2 hours ago    Up Less than a second   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp
+http_service_app   http-app             "python -m uvicorn h…"   app        8 hours ago    Up About a minute       0.0.0.0:8000->8000/tcp, :::8000->8000/tcp
+http_service_pg    postgres:16-alpine   "docker-entrypoint.s…"   postgres   34 hours ago   Up 2 minutes            0.0.0.0:5432->5432/tcp, :::5432->5432/tcp
+
+--- last 200 logs adm_webadm_web  | AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.28.0.10. Set the 'ServerName' directive globally to suppress this message
+adm_web  | AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.28.0.10. Set the 'ServerName' directive globally to suppress this message
+adm_web  | [Thu Aug 14 20:41:59.482704 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.62 (Debian) PHP/8.3.24 configured -- resuming normal operations
+adm_web  | [Thu Aug 14 20:41:59.482721 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+adm_web  | 172.28.0.1 - - [14/Aug/2025:20:42:44 +0000] "GET / HTTP/1.1" 401 727 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:46 +0000] "GET / HTTP/1.1" 200 3402 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:47 +0000] "GET /assets/d4826684/css/jquery-ui.min.css HTTP/1.1" 200 8069 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:47 +0000] "GET /assets/d4826684/css/bootstrap-switch.min.css HTTP/1.1" 200 1751 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:47 +0000] "GET /assets/d4826684/css/admin_project.css HTTP/1.1" 200 282 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:47 +0000] "GET /assets/dbde3edc/jquery.fancybox.css HTTP/1.1" 200 1778 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:47 +0000] "GET /assets/dbde3edc/helpers/jquery.fancybox-buttons.css HTTP/1.1" 200 1074 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:47 +0000] "GET /assets/dbde3edc/helpers/jquery.fancybox-thumbs.css HTTP/1.1" 200 638 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:47 +0000] "GET /assets/d4826684/css/theme.css HTTP/1.1" 200 3241 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:47 +0000] "GET /assets/7660b628/jquery.js HTTP/1.1" 200 84435 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:47 +0000] "GET /uploads/logo.svg HTTP/1.1" 404 804 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:47 +0000] "GET /assets/d4826684/js/bootstrap-switch.min.js HTTP/1.1" 200 3690 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:47 +0000] "GET /assets/dbde3edc/jquery.fancybox.min.js HTTP/1.1" 200 8965 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:47 +0000] "GET /assets/d4826684/js/theme.js HTTP/1.1" 200 4045 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:47 +0000] "GET /assets/15354775/yii.js HTTP/1.1" 200 6177 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:47 +0000] "GET /assets/5c420088/jquery.mousewheel.min.js HTTP/1.1" 200 1584 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:47 +0000] "GET /assets/dbde3edc/helpers/jquery.fancybox-buttons.js HTTP/1.1" 200 1423 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:47 +0000] "GET /assets/dbde3edc/helpers/jquery.fancybox-thumbs.js HTTP/1.1" 200 1841 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:47 +0000] "GET /assets/dbde3edc/helpers/jquery.fancybox-media.js HTTP/1.1" 200 2339 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:47 +0000] "GET /assets/d4826684/js/bootstrap-editable.js HTTP/1.1" 200 50899 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:47 +0000] "GET /assets/d4826684/js/jquery-ui.min.js HTTP/1.1" 200 67660 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:49 +0000] "GET /favicon.ico HTTP/1.1" 304 248 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:53 +0000] "GET /admin/settings HTTP/1.1" 200 3784 "http://localhost:8080/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:53 +0000] "GET /assets/2968673d/css/daterangepicker.css HTTP/1.1" 200 2200 "http://localhost:8080/admin/settings" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:53 +0000] "GET /assets/d4826684/css/theme.css HTTP/1.1" 200 3241 "http://localhost:8080/admin/settings" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:53 +0000] "GET /assets/2968673d/css/daterangepicker-kv.css HTTP/1.1" 200 843 "http://localhost:8080/admin/settings" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:53 +0000] "GET /assets/43269fca/css/kv-widgets.css HTTP/1.1" 200 752 "http://localhost:8080/admin/settings" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:53 +0000] "GET /assets/d4826684/css/bootstrap-switch.min.css HTTP/1.1" 200 1751 "http://localhost:8080/admin/settings" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:53 +0000] "GET /assets/d4826684/css/jquery-ui.min.css HTTP/1.1" 200 8070 "http://localhost:8080/admin/settings" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:53 +0000] "GET /assets/2968673d/js/moment.js HTTP/1.1" 200 32977 "http://localhost:8080/admin/settings" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:53 +0000] "GET /assets/d4826684/css/admin_project.css HTTP/1.1" 200 281 "http://localhost:8080/admin/settings" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:53 +0000] "GET /assets/2968673d/js/locales/ru.js HTTP/1.1" 200 2772 "http://localhost:8080/admin/settings" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:53 +0000] "GET /uploads/logo.svg HTTP/1.1" 404 804 "http://localhost:8080/admin/settings" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:53 +0000] "GET /assets/2968673d/js/daterangepicker.js HTTP/1.1" 200 11910 "http://localhost:8080/admin/settings" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:53 +0000] "GET /assets/d4826684/js/bootstrap-switch.min.js HTTP/1.1" 200 3690 "http://localhost:8080/admin/settings" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:53 +0000] "GET /assets/15354775/yii.gridView.js HTTP/1.1" 200 3065 "http://localhost:8080/admin/settings" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:53 +0000] "GET /assets/43269fca/js/kv-widgets.js HTTP/1.1" 200 861 "http://localhost:8080/admin/settings" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:53 +0000] "GET /assets/d4826684/js/theme.js HTTP/1.1" 200 4045 "http://localhost:8080/admin/settings" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:53 +0000] "GET /assets/d4826684/js/bootstrap-editable.js HTTP/1.1" 200 50899 "http://localhost:8080/admin/settings" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:42:53 +0000] "GET /assets/d4826684/js/jquery-ui.min.js HTTP/1.1" 200 67660 "http://localhost:8080/admin/settings" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 127.0.0.1 - - [14/Aug/2025:20:43:01 +0000] "OPTIONS * HTTP/1.0" 200 126 "-" "Apache/2.4.62 (Debian) PHP/8.3.24 (internal dummy connection)"
+adm_web  | 127.0.0.1 - - [14/Aug/2025:20:43:02 +0000] "OPTIONS * HTTP/1.0" 200 126 "-" "Apache/2.4.62 (Debian) PHP/8.3.24 (internal dummy connection)"
+adm_web  | 127.0.0.1 - - [14/Aug/2025:20:43:03 +0000] "OPTIONS * HTTP/1.0" 200 126 "-" "Apache/2.4.62 (Debian) PHP/8.3.24 (internal dummy connection)"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:03 +0000] "GET /admin/dispatch HTTP/1.1" 200 4377 "http://localhost:8080/admin/settings" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:03 +0000] "GET /assets/d4826684/css/admin_project.css HTTP/1.1" 200 282 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:03 +0000] "GET /assets/d4826684/css/bootstrap-switch.min.css HTTP/1.1" 200 1751 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:03 +0000] "GET /assets/d4826684/css/theme.css HTTP/1.1" 200 3242 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:03 +0000] "GET /assets/d4826684/css/jquery-ui.min.css HTTP/1.1" 200 8069 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:03 +0000] "GET /uploads/logo.svg HTTP/1.1" 404 804 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:03 +0000] "GET /assets/d4826684/js/bootstrap-switch.min.js HTTP/1.1" 200 3690 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:03 +0000] "GET /assets/d4826684/js/theme.js HTTP/1.1" 200 4045 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:03 +0000] "GET /assets/d4826684/js/jquery-ui.min.js HTTP/1.1" 200 67660 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:03 +0000] "GET /assets/d4826684/js/bootstrap-editable.js HTTP/1.1" 200 50899 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:05 +0000] "GET /admin/dispatch-pushes HTTP/1.1" 200 3075 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:05 +0000] "GET /assets/d4826684/css/jquery-ui.min.css HTTP/1.1" 200 8069 "http://localhost:8080/admin/dispatch-pushes" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:05 +0000] "GET /assets/d4826684/css/bootstrap-switch.min.css HTTP/1.1" 200 1750 "http://localhost:8080/admin/dispatch-pushes" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:05 +0000] "GET /assets/d4826684/css/admin_project.css HTTP/1.1" 200 282 "http://localhost:8080/admin/dispatch-pushes" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:05 +0000] "GET /assets/d4826684/css/theme.css HTTP/1.1" 200 3241 "http://localhost:8080/admin/dispatch-pushes" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:05 +0000] "GET /uploads/logo.svg HTTP/1.1" 404 804 "http://localhost:8080/admin/dispatch-pushes" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:05 +0000] "GET /assets/d4826684/js/jquery-ui.min.js HTTP/1.1" 200 67661 "http://localhost:8080/admin/dispatch-pushes" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:05 +0000] "GET /assets/d4826684/js/bootstrap-switch.min.js HTTP/1.1" 200 3690 "http://localhost:8080/admin/dispatch-pushes" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:05 +0000] "GET /assets/d4826684/js/theme.js HTTP/1.1" 200 4045 "http://localhost:8080/admin/dispatch-pushes" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:05 +0000] "GET /assets/d4826684/js/bootstrap-editable.js HTTP/1.1" 200 50899 "http://localhost:8080/admin/dispatch-pushes" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:10 +0000] "GET /admin/dispatch HTTP/1.1" 200 4367 "http://localhost:8080/admin/dispatch-pushes" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:10 +0000] "GET /assets/d4826684/css/admin_project.css HTTP/1.1" 200 281 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:10 +0000] "GET /assets/d4826684/css/bootstrap-switch.min.css HTTP/1.1" 200 1750 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:10 +0000] "GET /assets/d4826684/css/theme.css HTTP/1.1" 200 3241 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:10 +0000] "GET /assets/d4826684/css/jquery-ui.min.css HTTP/1.1" 200 8069 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:10 +0000] "GET /uploads/logo.svg HTTP/1.1" 404 804 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:10 +0000] "GET /assets/d4826684/js/jquery-ui.min.js HTTP/1.1" 200 67660 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:10 +0000] "GET /assets/d4826684/js/bootstrap-switch.min.js HTTP/1.1" 200 3690 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:10 +0000] "GET /assets/d4826684/js/bootstrap-editable.js HTTP/1.1" 200 50899 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:10 +0000] "GET /assets/d4826684/js/theme.js HTTP/1.1" 200 4045 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:11 +0000] "GET /admin/dispatch-pushes HTTP/1.1" 200 3075 "http://localhost:8080/admin/dispatch" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:11 +0000] "GET /assets/d4826684/css/admin_project.css HTTP/1.1" 200 281 "http://localhost:8080/admin/dispatch-pushes" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:11 +0000] "GET /assets/d4826684/css/bootstrap-switch.min.css HTTP/1.1" 200 1750 "http://localhost:8080/admin/dispatch-pushes" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:11 +0000] "GET /assets/d4826684/css/theme.css HTTP/1.1" 200 3241 "http://localhost:8080/admin/dispatch-pushes" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:11 +0000] "GET /assets/d4826684/css/jquery-ui.min.css HTTP/1.1" 200 8069 "http://localhost:8080/admin/dispatch-pushes" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:11 +0000] "GET /uploads/logo.svg HTTP/1.1" 404 804 "http://localhost:8080/admin/dispatch-pushes" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:11 +0000] "GET /assets/d4826684/js/jquery-ui.min.js HTTP/1.1" 200 67660 "http://localhost:8080/admin/dispatch-pushes" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:11 +0000] "GET /assets/d4826684/js/bootstrap-switch.min.js HTTP/1.1" 200 3690 "http://localhost:8080/admin/dispatch-pushes" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:11 +0000] "GET /assets/d4826684/js/theme.js HTTP/1.1" 200 4045 "http://localhost:8080/admin/dispatch-pushes" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 172.28.0.1 - admin [14/Aug/2025:20:43:11 +0000] "GET /assets/d4826684/js/bootstrap-editable.js HTTP/1.1" 200 50899 "http://localhost:8080/admin/dispatch-pushes" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+adm_web  | 127.0.0.1 - - [14/Aug/2025:20:43:18 +0000] "OPTIONS * HTTP/1.0" 200 126 "-" "Apache/2.4.62 (Debian) PHP/8.3.24 (internal dummy connection)"
+adm_web  | 172.28.0.1 - - [14/Aug/2025:21:37:39 +0000] "-" 408 0 "-" "-"
+adm_web  | AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.28.0.5. Set the 'ServerName' directive globally to suppress this message
+adm_web  | AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.28.0.5. Set the 'ServerName' directive globally to suppress this message
+adm_web  | [Thu Aug 14 23:01:53.175969 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.62 (Debian) PHP/8.3.24 configured -- resuming normal operations
+adm_web  | [Thu Aug 14 23:01:53.175985 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+
+--- ensure symlink services/adm_web -> ../../admsymlink created
+
+--- git add & commit symlink[feat/ai-service 29b27ea] chore(adm_web): добавлен symlink на внешний проект ../adm для видимости в services
+ 1 file changed, 1 insertion(+)
+ create mode 120000 services/adm_web
+
+--- show services/adm_webитого 20
+drwxrwxr-x  5 craz craz 4096 авг 15 02:04 .
+drwxr-xr-x 13 craz craz 4096 авг 15 01:43 ..
+lrwxrwxrwx  1 craz craz    9 авг 15 02:04 adm_web -> ../../adm
+drwxrwxr-x  3 craz craz 4096 авг 14 18:29 ai_service
+drwxrwxr-x  4 craz craz 4096 авг 14 18:29 http_service
+drwxrwxr-x  3 craz craz 4096 авг 14 18:29 tg_bot
+lrwxrwxrwx 1 craz craz 9 авг 15 02:04 services/adm_web -> ../../adm
+
+--- remove symlink services/adm_web if existsrm 'services/adm_web'
+
+--- copy /home/craz/Learn/adm to services/adm_web (exclude .git)
+--- update docker-compose.yml build context for adm_web119:  adm_web:
+121:      context: ./services/adm_web
+122:      dockerfile: Dockerfile
+
+--- git add & commit

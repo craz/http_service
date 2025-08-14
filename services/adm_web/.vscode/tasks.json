@@ -1,0 +1,109 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Yii2: Migrate",
+            "type": "shell",
+            "command": "./yii migrate",
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Yii2: Clear Cache",
+            "type": "shell",
+            "command": "./yii cache/flush-all",
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Composer: Install",
+            "type": "shell",
+            "command": "composer install",
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Composer: Update",
+            "type": "shell",
+            "command": "composer update",
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Docker: Start",
+            "type": "shell",
+            "command": "docker-compose up -d",
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Docker: Stop",
+            "type": "shell",
+            "command": "docker-compose down",
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Docker: Logs",
+            "type": "shell",
+            "command": "docker-compose logs -f",
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "PHP: Syntax Check",
+            "type": "shell",
+            "command": "find . -name '*.php' -not -path './vendor/*' -not -path './runtime/*' -exec php -l {} \\;",
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

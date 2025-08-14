@@ -1,0 +1,22 @@
+{
+    "recommendations": [
+        "bmewburn.vscode-intelephense-client",
+        "xdebug.php-debug",
+        "neilbrayfield.php-docblocker",
+        "junstyle.php-cs-fixer",
+        "mehedidracula.php-namespace-resolver",
+        "ms-vscode.vscode-json",
+        "ms-vscode.vscode-yaml",
+        "ms-vscode.vscode-css-peek",
+        "ms-vscode.vscode-html-css-support",
+        "ms-vscode.vscode-js-debug",
+        "ms-vscode.vscode-js-debug-companion",
+        "ms-vscode.vscode-typescript-next",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode.vscode-git",
+        "ms-vscode.vscode-git-graph",
+        "ms-vscode.vscode-markdown-all-in-one",
+        "ms-vscode.vscode-sqlite",
+        "ms-vscode.vscode-xml"
+    ]
+}

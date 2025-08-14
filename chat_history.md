@@ -10208,4 +10208,11 @@ services/http_service/src/http_service/main.py:23
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 
---- prep: save chat history
+--- prep: save chat history[feat/adm-copy-internal a11ee46] chore(history): сохранить журнал перед переносом админки
+ 1 file changed, 36 insertions(+), 1 deletion(-)
+
+--- step: switch to feat/adm-copy-internalM	chat_history.md
+Ваша ветка опережает «origin/feat/adm-copy-internal» на 2 коммита.
+  (используйте «git push», чтобы опубликовать ваши локальные коммиты)
+
+--- step: apply admin copy manually on feat/adm-copy-internal

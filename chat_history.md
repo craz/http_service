@@ -10173,4 +10173,39 @@ branch 'feat/ai-service' set up to track 'origin/feat/ai-service'.
 --- step: cherry-pick admin copy commit
 --- step: push feat/adm-copy-internalbranch 'feat/adm-copy-internal' set up to track 'origin/feat/adm-copy-internal'.
 
---- step: revert on feat/ai-service
+--- step: revert on feat/ai-service[feat/adm-copy-internal 481052e] chore(history): журнал перед revert admin-copy
+ 1 file changed, 7 insertions(+)
+
+--- step: push feat/ai-service after revert
+--- step: run tests# гарантируем, что Postgres из compose поднят
+docker compose --env-file .env up -d postgres
+# прогон pytest в одноразовом контейнере Python, подключённом к сети compose
+docker run --rm \
+	--network http_default \
+	-v /home/craz/Learn/http:/work \
+	-w /work \
+	python:3.12-slim \
+		bash -lc "python -m pip install --no-cache-dir -e services/tg_bot -e services/http_service pytest pytest-asyncio pytest-faker faker respx >/dev/null && PYTHONPATH=services/tg_bot/src:services/http_service/src TG_TEST_PGHOST=http_service_pg TG_TEST_PGPORT=5432 pytest -q"
+.....                                                                    [100%]
+=============================== warnings summary ===============================
+services/http_service/src/http_service/main.py:23
+  /work/services/http_service/src/http_service/main.py:23: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+../usr/local/lib/python3.12/site-packages/fastapi/applications.py:4495
+  /usr/local/lib/python3.12/site-packages/fastapi/applications.py:4495: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+--- prep: save chat history

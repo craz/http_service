@@ -1,0 +1,18 @@
+# Cursor Rules for this repository
+
+[conventional_commits]
+required = true
+
+[changelog]
+file = "CHANGELOG.md"
+format = "keep-a-changelog"
+commit_after_edit = true
+
+[branding]
+primary_color = "#ff9800"
+login_logo_candidates = ["web/uploads/logo.svg", "web/uploads/logo.png", "web/uploads/logo.jpg"]
+
+[reviews]
+summary_language = "ru"
+
+

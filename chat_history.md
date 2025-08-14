@@ -20585,4 +20585,11 @@ services/http_service/src/http_service/main.py:23
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 
---- commit chat history to unblock branch switches
+--- commit chat history to unblock branch switches[feat/adm-copy-internal 660357d] chore(history): журнал перед фиксацией adm в feat/adm-copy-internal
+ 1 file changed, 2087 insertions(+)
+
+--- switch to feat/adm-copy-internalM	chat_history.md
+Ваша ветка опережает «origin/feat/adm-copy-internal» на 3 коммита.
+  (используйте «git push», чтобы опубликовать ваши локальные коммиты)
+
+--- copy adm into services/adm_web and set compose context

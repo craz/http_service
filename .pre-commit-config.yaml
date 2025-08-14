@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: bash -lc 'PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=services/tg_bot/src:services/http_service/src pytest -q'
+        language: system
+        pass_filenames: false
+

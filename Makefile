@@ -54,6 +54,46 @@ bot-down:
 	docker compose rm -f tg_bot || true
 
 
+# Тесты
+.PHONY: test test-bot precommit-install
+
+test:
+	# гарантируем, что Postgres из compose поднят
+	docker compose --env-file .env up -d postgres
+	# прогон pytest в одноразовом контейнере Python, подключённом к сети compose
+	docker run --rm \
+		--network http_default \
+		-v $(PWD):/work \
+		-w /work \
+		python:3.12-slim \
+		bash -lc "python -m pip install --no-cache-dir -e services/tg_bot -e services/http_service pytest pytest-asyncio pytest-faker faker >/dev/null && PYTHONPATH=services/tg_bot/src:services/http_service/src TG_TEST_PGHOST=http_service_pg TG_TEST_PGPORT=5432 pytest -q"
+
+test-bot:
+	# только тесты tg_bot
+	docker compose --env-file .env up -d postgres
+	docker run --rm \
+		--network http_default \
+		-v $(PWD):/work \
+		-w /work \
+		python:3.12-slim \
+		bash -lc "python -m pip install --no-cache-dir -e services/tg_bot -e services/http_service pytest pytest-asyncio pytest-faker faker >/dev/null && PYTHONPATH=services/tg_bot/src:services/http_service/src TG_TEST_PGHOST=http_service_pg TG_TEST_PGPORT=5432 pytest -q tests/test_tg_bot_db.py"
+
+.PHONY: alembic-upgrade-docker
+alembic-upgrade-docker:
+	# запустить alembic upgrade head в одноразовом контейнере
+	docker run --rm \
+		--network http_default \
+		-v $(PWD)/services/http_service:/work \
+		-w /work \
+		-e DATABASE_URL=postgresql+psycopg://postgres:postgres@http_service_pg:5432/http_service \
+		python:3.12-slim \
+		bash -lc "python -m pip install --no-cache-dir alembic sqlalchemy psycopg[binary] >/dev/null && PYTHONPATH=./src alembic -c alembic.ini upgrade head && echo 'Alembic upgraded to head'"
+
+precommit-install:
+	python -m pip install --upgrade pre-commit >/dev/null || true
+	pre-commit install || true
+
+
 # Alembic (миграции для services/http_service)
 alembic-init:
 	@cd services/http_service && [ -f alembic.ini ] || alembic init -t async alembic

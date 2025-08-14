@@ -312,3 +312,227 @@ $ gh --version
 
 ---
 $ git add -A
+$ git commit -m 'fix(http): ignore extra env in Settings and add respx to test runner'
+[feat/ai-agent f8774f4] fix(http): ignore extra env in Settings and add respx to test runner
+ 3 files changed, 106 insertions(+), 7 deletions(-)
+$ git push -u origin HEAD
+To https://github.com/craz/http_service.git
+   c8d96b6..f8774f4  HEAD -> feat/ai-agent
+branch 'feat/ai-agent' set up to track 'origin/feat/ai-agent'.
+$ make test -j1
+# гарантируем, что Postgres из compose поднят
+docker compose --env-file .env up -d postgres
+ Container http_service_pg  Running
+# прогон pytest в одноразовом контейнере Python, подключённом к сети compose
+docker run --rm \
+	--network http_default \
+	-v /home/craz/Learn/http:/work \
+	-w /work \
+	python:3.12-slim \
+		bash -lc "python -m pip install --no-cache-dir -e services/tg_bot -e services/http_service pytest pytest-asyncio pytest-faker faker respx >/dev/null && PYTHONPATH=services/tg_bot/src:services/http_service/src TG_TEST_PGHOST=http_service_pg TG_TEST_PGPORT=5432 pytest -q"
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+
+[notice] A new release of pip is available: 25.0.1 -> 25.2
+[notice] To update, run: pip install --upgrade pip
+
+==================================== ERRORS ====================================
+_____________________ ERROR collecting tests/test_main.py ______________________
+ImportError while importing test module '/work/tests/test_main.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_main.py:6: in <module>
+    from http_service.main import app
+services/http_service/src/http_service/main.py:35: in <module>
+    app = create_app()
+          ^^^^^^^^^^^^
+services/http_service/src/http_service/main.py:28: in create_app
+    from .routers.tg import router as tg_router
+services/http_service/src/http_service/routers/tg.py:6: in <module>
+    from ..db import TgMessage
+E   ImportError: cannot import name 'TgMessage' from 'http_service.db' (/work/services/http_service/src/http_service/db.py)
+_____________________ ERROR collecting tests/test_users.py _____________________
+ImportError while importing test module '/work/tests/test_users.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_users.py:3: in <module>
+    from http_service.main import app
+services/http_service/src/http_service/main.py:35: in <module>
+    app = create_app()
+          ^^^^^^^^^^^^
+services/http_service/src/http_service/main.py:28: in create_app
+    from .routers.tg import router as tg_router
+services/http_service/src/http_service/routers/tg.py:6: in <module>
+    from ..db import TgMessage
+E   ImportError: cannot import name 'TgMessage' from 'http_service.db' (/work/services/http_service/src/http_service/db.py)
+=============================== warnings summary ===============================
+services/http_service/src/http_service/main.py:23
+services/http_service/src/http_service/main.py:23
+  /work/services/http_service/src/http_service/main.py:23: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+../usr/local/lib/python3.12/site-packages/fastapi/applications.py:4495
+../usr/local/lib/python3.12/site-packages/fastapi/applications.py:4495
+  /usr/local/lib/python3.12/site-packages/fastapi/applications.py:4495: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+ERROR tests/test_main.py
+ERROR tests/test_users.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+cursor: *** [Makefile:64: test] Ошибка 2
+
+---
+$ sed -n '1,160p' .env
+# Copy to .env and fill values
+
+NGROK_AUTHTOKEN=***
+NGROK_DOMAIN=***
+TG_BOT_TOKEN = ***
+GITHUB_TOKEN = ***
+
+---
+$ git add -A
+$ git commit -m 'refactor(http): drop TgMessage usage from tg router (pass-through only)'
+[feat/ai-agent 70550a6] refactor(http): drop TgMessage usage from tg router (pass-through only)
+ 2 files changed, 98 insertions(+), 21 deletions(-)
+$ git push -u origin HEAD
+remote: error: GH013: Repository rule violations found for refs/heads/feat/ai-agent.        
+remote: 
+remote: - GITHUB PUSH PROTECTION        
+remote:   —————————————————————————————————————————        
+remote:     Resolve the following violations before pushing again        
+remote: 
+remote:     - Push cannot contain secrets        
+remote: 
+remote:             
+remote:      (?) Learn how to resolve a blocked push        
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push        
+remote:             
+remote:             
+remote:       —— GitHub Personal Access Token ——————————————————————        
+remote:        locations:        
+remote:          - commit: 70550a6470ba9c2c9ac3b04762f20a5d23eea34c        
+remote:            path: chat_history.md:408        
+remote:             
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.        
+remote:        https://github.com/craz/http_service/security/secret-scanning/unblock-secret/31HflkzMYBzvfTlfRVevOMNzSib        
+remote:             
+remote: 
+remote: 
+To https://github.com/craz/http_service.git
+ ! [remote rejected] HEAD -> feat/ai-agent (push declined due to repository rule violations)
+error: не удалось отправить некоторые ссылки в «https://github.com/craz/http_service.git»
+$ make test -j1
+# гарантируем, что Postgres из compose поднят
+docker compose --env-file .env up -d postgres
+ Container http_service_pg  Running
+# прогон pytest в одноразовом контейнере Python, подключённом к сети compose
+docker run --rm \
+	--network http_default \
+	-v /home/craz/Learn/http:/work \
+	-w /work \
+	python:3.12-slim \
+		bash -lc "python -m pip install --no-cache-dir -e services/tg_bot -e services/http_service pytest pytest-asyncio pytest-faker faker respx >/dev/null && PYTHONPATH=services/tg_bot/src:services/http_service/src TG_TEST_PGHOST=http_service_pg TG_TEST_PGPORT=5432 pytest -q"
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+
+[notice] A new release of pip is available: 25.0.1 -> 25.2
+[notice] To update, run: pip install --upgrade pip
+.F.FF                                                                    [100%]
+=================================== FAILURES ===================================
+______________________________ test_proxy_success ______________________________
+
+    @respx.mock
+    def test_proxy_success():
+        client = TestClient(app)
+    
+        route = respx.get("https://example.com/api").mock(
+            return_value=httpx.Response(200, json={"hello": "world"})
+        )
+    
+        r = client.get("/proxy", params={"url": "https://example.com/api"})
+>       assert r.status_code == 200
+E       assert 404 == 200
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests/test_main.py:25: AssertionError
+_______________________________ test_get_user_ok _______________________________
+
+    def test_get_user_ok():
+        client = TestClient(app)
+        r = client.get("/users/1")
+>       assert r.status_code == 200
+E       assert 404 == 200
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests/test_users.py:9: AssertionError
+___________________________ test_get_user_not_found ____________________________
+
+    def test_get_user_not_found():
+        client = TestClient(app)
+        r = client.get("/users/999")
+        assert r.status_code == 404
+>       assert r.json()["detail"] == "User not found"
+E       AssertionError: assert 'Not Found' == 'User not found'
+E         
+E         - User not found
+E         + Not Found
+
+tests/test_users.py:17: AssertionError
+=============================== warnings summary ===============================
+services/http_service/src/http_service/main.py:23
+  /work/services/http_service/src/http_service/main.py:23: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+../usr/local/lib/python3.12/site-packages/fastapi/applications.py:4495
+  /usr/local/lib/python3.12/site-packages/fastapi/applications.py:4495: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_main.py::test_proxy_success - assert 404 == 200
+FAILED tests/test_users.py::test_get_user_ok - assert 404 == 200
+FAILED tests/test_users.py::test_get_user_not_found - AssertionError: assert ...
+cursor: *** [Makefile:64: test] Ошибка 1
+
+---
+$ git log --oneline -n 10
+70550a6 refactor(http): drop TgMessage usage from tg router (pass-through only)
+f8774f4 fix(http): ignore extra env in Settings and add respx to test runner
+c8d96b6 chore(history): update session logs before syncing main
+cb01104 chore(history): append session logs and clean pgadmin state
+f7f873e docs: restore PRODUCT_REQUIREMENTS.md and update changelog; log in chat_history
+4e1dc74 merge: feat/refactor-routers-and-migrations into main
+ca9c65c ci(test): add dockerized tests with faker; pre-commit hook and CI workflow
+ba7c73d refactor(http): remove Telegram domain from HTTP service; add created_at to request_log
+344ff56 feat(ai): add ai_service with DB, integrate bot with AI and menu; compose/docker updates
+764d08a docs(chat_history): log memory rule confirmation and follow-up
+
+---
+$ git add -A

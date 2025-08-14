@@ -26,8 +26,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     from .routers.health import router as health_router
     from .routers.tg import router as tg_router
+    from .routers.proxy import router as proxy_router
+    from .routers.users import router as users_router
     app.include_router(health_router)
     app.include_router(tg_router)
+    app.include_router(proxy_router)
+    app.include_router(users_router)
 
     return app
 

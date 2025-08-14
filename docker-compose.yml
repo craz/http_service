@@ -83,8 +83,36 @@ services:
     command: ["python", "-m", "tg_bot_service.main"]
     environment:
       - TG_BOT_TOKEN=${TG_BOT_TOKEN}
+      - HTTP_SERVICE_BASE_URL=http://http_service_app:8000
+      - TG_BOT_DATABASE_URL=${TG_BOT_DATABASE_URL:-postgresql+psycopg://postgres:postgres@postgres:5432/tg_bot}
     depends_on:
       - app
+      - postgres
+    networks:
+      - default
+
+  ai_service:
+    build: .
+    container_name: ai_service_app
+    command: ["python", "-m", "uvicorn", "ai_service.main:app", "--host", "0.0.0.0", "--port", "8010"]
+    environment:
+      - AI_REPLY_PREFIX=${AI_REPLY_PREFIX:-AI:}
+      - AI_DATABASE_URL=${AI_DATABASE_URL:-postgresql+psycopg://postgres:postgres@postgres:5432/ai_service}
+    ports:
+      - "8010:8010"
+    depends_on:
+      - postgres
+      - ollama
+    networks:
+      - default
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
     networks:
       - default
 
@@ -92,6 +120,7 @@ volumes:
   pgdata:
   adm_pg_data:
     external: true
+  ollama_data:
 
 networks:
   default:

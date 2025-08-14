@@ -18,3 +18,5 @@ def set_request_id(value: Optional[str]) -> None:
 
 def new_request_id() -> str:
     return uuid.uuid4().hex
+
+

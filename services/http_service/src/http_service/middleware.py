@@ -90,3 +90,5 @@ class RequestDbLogMiddleware(BaseHTTPMiddleware):
                 )
             except Exception:
                 pass
+
+

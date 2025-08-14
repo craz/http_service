@@ -21,6 +21,7 @@ class RequestLog(Base):
     method: Mapped[str]
     path: Mapped[str]
     status: Mapped[int]
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class RequestAudit(Base):
@@ -56,6 +57,9 @@ class ProxyAudit(Base):
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+# Удалён доменно-специфичный объект Telegram. HTTP-сервис не хранит данные каналов.
+
+
 def make_engine() -> AsyncEngine:
     url = os.getenv("DATABASE_URL", "postgresql+psycopg://postgres:postgres@postgres:5432/postgres")
     if url.startswith("postgresql://"):
@@ -78,6 +82,13 @@ async def init_models(engine: AsyncEngine) -> None:
                 ADD COLUMN IF NOT EXISTS request_log_id integer;
             CREATE INDEX IF NOT EXISTS idx_request_audit_created_at ON request_audit (created_at);
             CREATE INDEX IF NOT EXISTS idx_request_audit_request_log_id ON request_audit (request_log_id);
+            """
+        ))
+        await conn.execute(text(
+            """
+            ALTER TABLE request_log
+                ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();
+            CREATE INDEX IF NOT EXISTS idx_request_log_created_at ON request_log (created_at);
             """
         ))
         # добавляем FK, если его ещё нет
@@ -128,6 +139,8 @@ async def init_models(engine: AsyncEngine) -> None:
         ))
         await conn.execute(text("select 1"))
 
+        # HTTP-сервис не управляет таблицами каналов (например, Telegram/VK)
+
 
 def make_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
     return async_sessionmaker(engine, expire_on_commit=False)
@@ -142,3 +155,5 @@ async def session_scope(session_factory: async_sessionmaker[AsyncSession]) -> As
         except Exception:
             await session.rollback()
             raise
+
+

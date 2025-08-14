@@ -272,7 +272,7 @@ E   tg_bot_token
 E     Extra inputs are not permitted [type=extra_forbidden, input_value='8251247466:AAGnFfjixYHnGlascOuvnP-ELPIrLxfR4gU', input_type=str]
 E       For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
 E   github_token
-E     Extra inputs are not permitted [type=extra_forbidden, input_value='github_pat_11AACMRWA0T3C...8KEXXyqYLKYJXGRy8Azv8Ua', input_type=str]
+E     Extra inputs are not permitted [type=extra_forbidden, input_value='***REDACTED***...8KEXXyqYLKYJXGRy8Azv8Ua', input_type=str]
 E       For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
 =============================== warnings summary ===============================
 ../usr/local/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
@@ -3920,3 +3920,152 @@ adm_web  | [Thu Aug 14 20:41:59.482721 2025] [core:notice] [pid 1:tid 1] AH00094
 
 ---
 $ git add -A
+$ git commit -m 'feat(adm): add adm_web service (Yii2 admin) with container and DB connection to adm_pg'
+[feat/adm-service 6eba0e1] feat(adm): add adm_web service (Yii2 admin) with container and DB connection to adm_pg
+ 2 files changed, 3402 insertions(+)
+$ git push -u origin HEAD
+remote: 
+remote: Create a pull request for 'feat/adm-service' on GitHub by visiting:        
+remote:      https://github.com/craz/http_service/pull/new/feat/adm-service        
+remote: 
+To https://github.com/craz/http_service.git
+ * [new branch]      HEAD -> feat/adm-service
+branch 'feat/adm-service' set up to track 'origin/feat/adm-service'.
+
+---
+$ git add README.md CHANGELOG.md .github/workflows/ci.yml
+$ git commit -m 'docs: update README for adm_web/ai_service; chore(ci): install respx; docs: changelog entries'
+[feat/adm-service 9d3e7b6] docs: update README for adm_web/ai_service; chore(ci): install respx; docs: changelog entries
+ 3 files changed, 29 insertions(+), 3 deletions(-)
+$ git push -u origin HEAD
+To https://github.com/craz/http_service.git
+   6eba0e1..9d3e7b6  HEAD -> feat/adm-service
+branch 'feat/adm-service' set up to track 'origin/feat/adm-service'.
+$ make test -j1
+# гарантируем, что Postgres из compose поднят
+docker compose --env-file .env up -d postgres
+ Container http_service_pg  Running
+# прогон pytest в одноразовом контейнере Python, подключённом к сети compose
+docker run --rm \
+	--network http_default \
+	-v /home/craz/Learn/http:/work \
+	-w /work \
+	python:3.12-slim \
+		bash -lc "python -m pip install --no-cache-dir -e services/tg_bot -e services/http_service pytest pytest-asyncio pytest-faker faker respx >/dev/null && PYTHONPATH=services/tg_bot/src:services/http_service/src TG_TEST_PGHOST=http_service_pg TG_TEST_PGPORT=5432 pytest -q"
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+
+[notice] A new release of pip is available: 25.0.1 -> 25.2
+[notice] To update, run: pip install --upgrade pip
+.....                                                                    [100%]
+=============================== warnings summary ===============================
+services/http_service/src/http_service/main.py:23
+  /work/services/http_service/src/http_service/main.py:23: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+../usr/local/lib/python3.12/site-packages/fastapi/applications.py:4495
+  /usr/local/lib/python3.12/site-packages/fastapi/applications.py:4495: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+---
+true
+Pull Request successfully merged
+$ git checkout main
+error: Ваши локальные изменения в указанных файлах будут перезаписаны при переключении на состояние:
+	chat_history.md
+Сделайте коммит или спрячьте ваши изменения перед переключением веток.
+Прерываю
+$ git pull --rebase origin main
+error: не удалось выполнить получение с перемещением: У вас есть непроиндексированные изменения.
+error: Сделайте коммит или спрячьте их.
+$ make test -j1
+# гарантируем, что Postgres из compose поднят
+docker compose --env-file .env up -d postgres
+ Container http_service_pg  Running
+# прогон pytest в одноразовом контейнере Python, подключённом к сети compose
+docker run --rm \
+	--network http_default \
+	-v /home/craz/Learn/http:/work \
+	-w /work \
+	python:3.12-slim \
+		bash -lc "python -m pip install --no-cache-dir -e services/tg_bot -e services/http_service pytest pytest-asyncio pytest-faker faker respx >/dev/null && PYTHONPATH=services/tg_bot/src:services/http_service/src TG_TEST_PGHOST=http_service_pg TG_TEST_PGPORT=5432 pytest -q"
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+
+[notice] A new release of pip is available: 25.0.1 -> 25.2
+[notice] To update, run: pip install --upgrade pip
+.....                                                                    [100%]
+=============================== warnings summary ===============================
+services/http_service/src/http_service/main.py:23
+  /work/services/http_service/src/http_service/main.py:23: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+../usr/local/lib/python3.12/site-packages/fastapi/applications.py:4495
+  /usr/local/lib/python3.12/site-packages/fastapi/applications.py:4495: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+---
+$ git add chat_history.md
+$ git commit -m 'docs(history): update chat history after merge PR #10'
+[feat/adm-service 4a52828] docs(history): update chat history after merge PR #10
+ 1 file changed, 109 insertions(+)
+$ git push -u origin HEAD
+remote: error: GH013: Repository rule violations found for refs/heads/feat/adm-service.        
+remote: 
+remote: - GITHUB PUSH PROTECTION        
+remote:   —————————————————————————————————————————        
+remote:     Resolve the following violations before pushing again        
+remote: 
+remote:     - Push cannot contain secrets        
+remote: 
+remote:             
+remote:      (?) Learn how to resolve a blocked push        
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push        
+remote:             
+remote:             
+remote:       —— GitHub Personal Access Token ——————————————————————        
+remote:        locations:        
+remote:          - commit: 4a528287655c5dff3329fde9b89c575c4d933b14        
+remote:            path: chat_history.md:3982        
+remote:             
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.        
+remote:        https://github.com/craz/http_service/security/secret-scanning/unblock-secret/31HflkzMYBzvfTlfRVevOMNzSib        
+remote:             
+remote: 
+remote: 
+To https://github.com/craz/http_service.git
+ ! [remote rejected] HEAD -> feat/adm-service (push declined due to repository rule violations)
+error: не удалось отправить некоторые ссылки в «https://github.com/craz/http_service.git»
+$ git checkout main
+error: Ваши локальные изменения в указанных файлах будут перезаписаны при переключении на состояние:
+	chat_history.md
+Сделайте коммит или спрячьте ваши изменения перед переключением веток.
+Прерываю
+$ git pull --rebase origin main
+error: не удалось выполнить получение с перемещением: У вас есть непроиндексированные изменения.
+error: Сделайте коммит или спрячьте их.
+
+---
+# redact secrets in chat_history.md

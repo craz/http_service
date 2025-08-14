@@ -216,3 +216,99 @@ error: Сделайте коммит или спрячьте их.
 
 ---
 $ git add -A
+$ git commit -m 'chore(history): update session logs before syncing main'
+[main c8d96b6] chore(history): update session logs before syncing main
+ 1 file changed, 10 insertions(+)
+$ git pull --rebase --autostash origin main
+Из https://github.com/craz/http_service
+ * branch            main       -> FETCH_HEAD
+
+---
+$ make -v | head -n 1
+GNU Make 4.3
+$ make test -j1
+# гарантируем, что Postgres из compose поднят
+docker compose --env-file .env up -d postgres
+ Container http_service_pg  Running
+# прогон pytest в одноразовом контейнере Python, подключённом к сети compose
+docker run --rm \
+	--network http_default \
+	-v /home/craz/Learn/http:/work \
+	-w /work \
+	python:3.12-slim \
+	bash -lc "python -m pip install --no-cache-dir -e services/tg_bot -e services/http_service pytest pytest-asyncio pytest-faker faker >/dev/null && PYTHONPATH=services/tg_bot/src:services/http_service/src TG_TEST_PGHOST=http_service_pg TG_TEST_PGPORT=5432 pytest -q"
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+
+[notice] A new release of pip is available: 25.0.1 -> 25.2
+[notice] To update, run: pip install --upgrade pip
+
+==================================== ERRORS ====================================
+_____________________ ERROR collecting tests/test_main.py ______________________
+ImportError while importing test module '/work/tests/test_main.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_main.py:1: in <module>
+    import respx
+E   ModuleNotFoundError: No module named 'respx'
+_____________________ ERROR collecting tests/test_users.py _____________________
+tests/test_users.py:3: in <module>
+    from http_service.main import app
+services/http_service/src/http_service/main.py:35: in <module>
+    app = create_app()
+          ^^^^^^^^^^^^
+services/http_service/src/http_service/main.py:12: in create_app
+    settings = settings or Settings()
+                           ^^^^^^^^^^
+/usr/local/lib/python3.12/site-packages/pydantic_settings/main.py:188: in __init__
+    super().__init__(
+E   pydantic_core._pydantic_core.ValidationError: 3 validation errors for Settings
+E   ngrok_domain
+E     Extra inputs are not permitted [type=extra_forbidden, input_value='factual-robust-manatee.ngrok-free.app', input_type=str]
+E       For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
+E   tg_bot_token
+E     Extra inputs are not permitted [type=extra_forbidden, input_value='8251247466:AAGnFfjixYHnGlascOuvnP-ELPIrLxfR4gU', input_type=str]
+E       For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
+E   github_token
+E     Extra inputs are not permitted [type=extra_forbidden, input_value='github_pat_11AACMRWA0T3C...8KEXXyqYLKYJXGRy8Azv8Ua', input_type=str]
+E       For further information visit https://errors.pydantic.dev/2.11/v/extra_forbidden
+=============================== warnings summary ===============================
+../usr/local/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+  /usr/local/lib/python3.12/site-packages/pydantic/_internal/_config.py:323: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.11/migration/
+    warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+ERROR tests/test_main.py
+ERROR tests/test_users.py - pydantic_core._pydantic_core.ValidationError: 3 v...
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+cursor: *** [Makefile:64: test] Ошибка 2
+
+---
+$ git checkout main
+Уже на «main»
+M	chat_history.md
+Эта ветка соответствует «origin/main».
+$ git pull --rebase origin main
+error: не удалось выполнить получение с перемещением: У вас есть непроиндексированные изменения.
+error: Сделайте коммит или спрячьте их.
+$ git switch -c feat/ai-agent
+Переключились на новую ветку «feat/ai-agent»
+$ git push -u origin feat/ai-agent
+remote: 
+remote: Create a pull request for 'feat/ai-agent' on GitHub by visiting:        
+remote:      https://github.com/craz/http_service/pull/new/feat/ai-agent        
+remote: 
+To https://github.com/craz/http_service.git
+ * [new branch]      feat/ai-agent -> feat/ai-agent
+branch 'feat/ai-agent' set up to track 'origin/feat/ai-agent'.
+
+---
+$ gh --version
+Команда '/usr/local/bin/cursor' доступна в '/usr/local/bin/cursor'
+/usr/local/bin/cursor: команда не найдена
+
+---
+$ git add -A

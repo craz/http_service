@@ -66,7 +66,7 @@ test:
 		-v $(PWD):/work \
 		-w /work \
 		python:3.12-slim \
-		bash -lc "python -m pip install --no-cache-dir -e services/tg_bot -e services/http_service pytest pytest-asyncio pytest-faker faker >/dev/null && PYTHONPATH=services/tg_bot/src:services/http_service/src TG_TEST_PGHOST=http_service_pg TG_TEST_PGPORT=5432 pytest -q"
+			bash -lc "python -m pip install --no-cache-dir -e services/tg_bot -e services/http_service pytest pytest-asyncio pytest-faker faker respx >/dev/null && PYTHONPATH=services/tg_bot/src:services/http_service/src TG_TEST_PGHOST=http_service_pg TG_TEST_PGPORT=5432 pytest -q"
 
 test-bot:
 	# только тесты tg_bot
@@ -76,7 +76,7 @@ test-bot:
 		-v $(PWD):/work \
 		-w /work \
 		python:3.12-slim \
-		bash -lc "python -m pip install --no-cache-dir -e services/tg_bot -e services/http_service pytest pytest-asyncio pytest-faker faker >/dev/null && PYTHONPATH=services/tg_bot/src:services/http_service/src TG_TEST_PGHOST=http_service_pg TG_TEST_PGPORT=5432 pytest -q tests/test_tg_bot_db.py"
+			bash -lc "python -m pip install --no-cache-dir -e services/tg_bot -e services/http_service pytest pytest-asyncio pytest-faker faker respx >/dev/null && PYTHONPATH=services/tg_bot/src:services/http_service/src TG_TEST_PGHOST=http_service_pg TG_TEST_PGPORT=5432 pytest -q tests/test_tg_bot_db.py"
 
 .PHONY: alembic-upgrade-docker
 alembic-upgrade-docker:

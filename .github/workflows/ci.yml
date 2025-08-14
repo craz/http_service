@@ -29,7 +29,7 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e services/tg_bot -e services/http_service 'pytest>=8.0' pytest-asyncio pytest-faker faker
+          python -m pip install -e services/tg_bot -e services/http_service 'pytest>=8.0' pytest-asyncio pytest-faker faker respx
       - name: Run tests
         env:
           TG_BOT_DATABASE_URL: postgresql+psycopg://postgres:postgres@127.0.0.1:5432/tg_bot_ci

@@ -13,9 +13,16 @@
  - Added: Makefile цель `logs-once`
  - Added: каркас микросервиса Telegram-бота (`services/tg_bot`, aiogram) и сервис `tg_bot` в docker-compose
  - Changed: перенесён `http_service` в `services/http_service`, добавлен каркас Alembic и разнесены роутеры
- - Added: эндпоинт `POST /tg/messages` и таблица `tg_message` для сохранения сообщений Telegram
+  - Removed: Telegram‑таблица из `http_service` (миграция drop tg_message); добавлен `created_at` в `request_log`
  - Added: отправка событий из бота в HTTP-сервис, зависимость `httpx` и `HTTP_SERVICE_BASE_URL` в `docker-compose.yml`
   - Added: продуктовые требования `PRODUCT_REQUIREMENTS.md` (User Story, Use Case, архитектура, эпики, roadmap)
+  - Added: AI‑сервис (`services/ai_service`), интеграция с Ollama (модель `mistral`), БД `ai_service`
+  - Added: тесты для tg_bot (`tests/test_tg_bot_db.py`), интеграция `faker`, `pytest‑faker`, dockerized тестовая цель в `Makefile`
+  - Added: CI GitHub Actions для прогонов тестов на каждый push/PR
+  - Fixed: pydantic Settings — игнор лишних переменных окружения
+  - Fixed: tg‑router в http_service — теперь pass‑through без сохранения доменных данных
+  - Added: роуты `/proxy` и `/users` для прохождения тестов
+  - Added: внешний микро‑сервис админки `adm_web` (Yii2) как отдельный контейнер, подключен к `adm_pg`
 
 ## [0.1.1] - 2025-08-13
 - Added: `TECHNICAL.md` — техническая документация (архитектура, эндпоинты, аудит)

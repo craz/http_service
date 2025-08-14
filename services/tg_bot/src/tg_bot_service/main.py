@@ -26,7 +26,8 @@ _session_factory = None
 
 def _humanize_reply_text(text: str) -> str:
     # Убираем роботизированные самоописания
-    lower = text.strip().lower()
+    src = text or ""
+    lower = src.strip().lower()
     bad_starts = [
         "я - интеллектуальный ассистент",
         "я — интеллектуальный ассистент",
@@ -37,15 +38,62 @@ def _humanize_reply_text(text: str) -> str:
     ]
     for bad in bad_starts:
         if lower.startswith(bad):
-            # Обрезаем первую фразу до точки
-            parts = text.split(".", 1)
-            text = parts[1].strip() if len(parts) > 1 else ""
+            parts = src.split(".", 1)
+            src = parts[1].strip() if len(parts) > 1 else ""
             break
-    # Меньше канцелярита/списков: сжимаем лишние переносы и буллеты
-    text = text.replace("\n- ", "\n").replace("• ", "")
-    # Без извинений по умолчанию
-    text = text.replace("Извините, ", "")
-    return text.strip()
+
+    # Удаляем буллеты/нумерацию и лишние переносы
+    import re
+    src = re.sub(r"^\s*[-•]+\s*", "", src, flags=re.MULTILINE)  # - / •
+    src = re.sub(r"^\s*\d+\)\s*", "", src, flags=re.MULTILINE)  # 1) 2)
+    src = re.sub(r"^\s*\d+\.\s*", "", src, flags=re.MULTILINE)  # 1. 2.
+    src = src.replace("\r", "")
+    src = re.sub(r"\n{2,}", "\n", src)
+    src = re.sub(r"\s{2,}", " ", src)
+
+    # Без канцелярита‑извинений по умолчанию
+    src = src.replace("Извините, ", "")
+
+    # Жёстко сокращаем ответ до ~50% или не более 2 коротких предложений
+    def _split_sentences(s: str) -> list[str]:
+        # Простая разбивка по рус./англ. окончаниям предложений
+        parts = re.split(r"(?<=[.!?…])\s+", s.strip())
+        return [p.strip() for p in parts if p.strip()]
+
+    def _truncate_to_ratio(s: str, ratio: float = 0.5, min_chars: int = 120, max_chars: int = 400) -> str:
+        s = s.strip()
+        if not s:
+            return s
+        current_len = len(s)
+        target = max(min_chars, int(current_len * ratio))
+        target = min(target, max_chars)
+        # Если и так коротко — просто вернём слегка нормализованный текст
+        if current_len <= target:
+            return s
+        # Пробуем обрезать по предложениям: максимум 2
+        sentences = _split_sentences(s)
+        if sentences:
+            out: list[str] = []
+            total = 0
+            for sent in sentences:
+                if not sent:
+                    continue
+                if len(out) >= 2:
+                    break
+                if total + len(sent) + (1 if total > 0 else 0) > target:
+                    # Уместим часть предложения, если совсем длинное
+                    room = max(0, target - total - (1 if total > 0 else 0))
+                    if room > 20:
+                        out.append(sent[:room].rstrip(",;: ") + "…")
+                    break
+                out.append(sent)
+                total += len(sent) + (1 if total > 0 else 0)
+            if out:
+                return " ".join(out)
+        # Фолбэк — жёсткая обрезка по символам
+        return s[:target].rstrip(",;: ") + "…"
+
+    return _truncate_to_ratio(src).strip()
 
 async def _on_start(message: Message) -> None:
     # Приветствие при /start — отправляем и сохраняем в БД бота

@@ -1,0 +1,185 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "HTTP Requests (http_service)",
+      "gridPos": {"x": 0, "y": 0, "w": 8, "h": 6},
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto"},
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service=\"app\"}[5m]))",
+          "refId": "A",
+          "datasource": {"type": "loki", "uid": "loki"}
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "TG Bot Messages (tg_bot)",
+      "gridPos": {"x": 8, "y": 0, "w": 8, "h": 6},
+      "options": {"colorMode": "value"},
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service=\"tg_bot\"}[5m]))",
+          "refId": "A",
+          "datasource": {"type": "loki", "uid": "loki"}
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "AI Service Requests (5m)",
+      "gridPos": {"x": 16, "y": 0, "w": 8, "h": 6},
+      "options": {"colorMode": "value"},
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service=\"ai_service\"}[5m]))",
+          "refId": "A",
+          "datasource": {"type": "loki", "uid": "loki"}
+        }
+      ]
+    },
+    {
+      "type": "logs",
+      "title": "Errors (all)",
+      "gridPos": {"x": 0, "y": 6, "w": 24, "h": 10},
+      "options": {"showLabels": true, "showTime": true, "wrapLogMessage": true},
+      "targets": [
+        {
+          "expr": "{level=~\"(?i)(error|exception)\"}",
+          "refId": "A",
+          "datasource": {"type": "loki", "uid": "loki"}
+        }
+      ]
+    },
+    {
+      "type": "logs",
+      "title": "AI Service Requests",
+      "gridPos": {"x": 0, "y": 16, "w": 24, "h": 10},
+      "options": {"showLabels": true, "showTime": true, "wrapLogMessage": true},
+      "targets": [
+        {
+          "expr": "{service=\"ai_service\"}",
+          "refId": "A",
+          "datasource": {"type": "loki", "uid": "loki"}
+        }
+      ]
+    }
+    ,
+    {
+      "type": "logs",
+      "title": "TG Bot Errors",
+      "gridPos": {"x": 0, "y": 26, "w": 12, "h": 8},
+      "options": {"showLabels": true, "showTime": true, "wrapLogMessage": true},
+      "targets": [
+        {
+          "expr": "{service=\"tg_bot\"} |~ \"(?i)error|exception|traceback\"",
+          "refId": "A",
+          "datasource": {"type": "loki", "uid": "loki"}
+        }
+      ]
+    },
+    {
+      "type": "logs",
+      "title": "TG Bot TelegramNetworkError",
+      "gridPos": {"x": 12, "y": 26, "w": 12, "h": 8},
+      "options": {"showLabels": true, "showTime": true, "wrapLogMessage": true},
+      "targets": [
+        {
+          "expr": "{service=\"tg_bot\"} |= \"TelegramNetworkError\"",
+          "refId": "A",
+          "datasource": {"type": "loki", "uid": "loki"}
+        }
+      ]
+    },
+    {
+      "type": "logs",
+      "title": "TG Bot Network Issues",
+      "gridPos": {"x": 0, "y": 34, "w": 12, "h": 8},
+      "options": {"showLabels": true, "showTime": true, "wrapLogMessage": true},
+      "targets": [
+        {
+          "expr": "{service=\"tg_bot\"} |~ \"ClientConnectorError|ssl:default|Connection reset by peer\"",
+          "refId": "A",
+          "datasource": {"type": "loki", "uid": "loki"}
+        }
+      ]
+    },
+    {
+      "type": "logs",
+      "title": "TG Bot Failed to fetch updates",
+      "gridPos": {"x": 12, "y": 34, "w": 12, "h": 8},
+      "options": {"showLabels": true, "showTime": true, "wrapLogMessage": true},
+      "targets": [
+        {
+          "expr": "{service=\"tg_bot\"} |= \"Failed to fetch updates\"",
+          "refId": "A",
+          "datasource": {"type": "loki", "uid": "loki"}
+        }
+      ]
+    },
+    {
+      "type": "logs",
+      "title": "AI Service DB/Startup Issues",
+      "gridPos": {"x": 0, "y": 42, "w": 12, "h": 8},
+      "options": {"showLabels": true, "showTime": true, "wrapLogMessage": true},
+      "targets": [
+        {
+          "expr": "{service=\"ai_service\"} |~ \"OperationalError|database .* does not exist|startup failed\"",
+          "refId": "A",
+          "datasource": {"type": "loki", "uid": "loki"}
+        }
+      ]
+    },
+    {
+      "type": "logs",
+      "title": "AI Service Ollama Errors",
+      "gridPos": {"x": 12, "y": 42, "w": 12, "h": 8},
+      "options": {"showLabels": true, "showTime": true, "wrapLogMessage": true},
+      "targets": [
+        {
+          "expr": "{service=\"ai_service\"} |~ \"ollama|request failed|HTTP 5|json parse error\"",
+          "refId": "A",
+          "datasource": {"type": "loki", "uid": "loki"}
+        }
+      ]
+    },
+    {
+      "type": "logs",
+      "title": "HTTP Service Errors",
+      "gridPos": {"x": 0, "y": 50, "w": 24, "h": 8},
+      "options": {"showLabels": true, "showTime": true, "wrapLogMessage": true},
+      "targets": [
+        {
+          "expr": "{service=\"app\"} |~ \"(?i)error|exception\"",
+          "refId": "A",
+          "datasource": {"type": "loki", "uid": "loki"}
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Errors (5m)",
+      "gridPos": {"x": 0, "y": 58, "w": 8, "h": 6},
+      "options": {"colorMode": "value"},
+      "targets": [
+        {
+          "expr": "sum(count_over_time({compose_project=~\".*\"} |~ \"(?i)error|exception|traceback\"[5m]))",
+          "refId": "A",
+          "datasource": {"type": "loki", "uid": "loki"}
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "style": "dark",
+  "time": {"from": "now-6h", "to": "now"},
+  "timezone": "browser",
+  "title": "Monorepo Logs Overview",
+  "version": 1
+}
+

@@ -4751,3 +4751,2858 @@ ai_service_app  | ERROR:    Application startup failed. Exiting.
 
 ---
 $ git add -A
+$ git commit -m 'feat(ai): auto-create ai_service database if missing'
+[feat/ai-service 2158e32] feat(ai): auto-create ai_service database if missing
+ 2 files changed, 595 insertions(+)
+$ git push -u origin HEAD
+To https://github.com/craz/http_service.git
+   f8237ec..2158e32  HEAD -> feat/ai-service
+branch 'feat/ai-service' set up to track 'origin/feat/ai-service'.
+$ docker compose up -d ai_service
+ Container http_service_pg  Running
+ Container ollama  Running
+ Container ai_service_app  Created
+ Container ai_service_app  Starting
+ Container ai_service_app  Started
+$ docker compose logs --tail=50 ai_service | sed -n '1,200p'
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+ai_service_app  |     return _ConnectionFairy._checkout(self)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+ai_service_app  |     fairy = _ConnectionRecord.checkout(pool)
+ai_service_app  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+ai_service_app  |     rec = pool._do_get()
+ai_service_app  |           ^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+ai_service_app  |     with util.safe_reraise():
+ai_service_app  |          ^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+ai_service_app  |     raise exc_value.with_traceback(exc_tb)
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+ai_service_app  |     return self._create_connection()
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+ai_service_app  |     return _ConnectionRecord(self)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+ai_service_app  |     self.__connect()
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+ai_service_app  |     with util.safe_reraise():
+ai_service_app  |          ^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+ai_service_app  |     raise exc_value.with_traceback(exc_tb)
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+ai_service_app  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+ai_service_app  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+ai_service_app  |     return dialect.connect(*cargs, **cparams)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 629, in connect
+ai_service_app  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg.py", line 733, in connect
+ai_service_app  |     await_only(creator_fn(*arg, **kw))
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+ai_service_app  |     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+ai_service_app  |     value = await result
+ai_service_app  |             ^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/psycopg/connection_async.py", line 136, in connect
+ai_service_app  |     raise last_ex.with_traceback(None)
+ai_service_app  | sqlalchemy.exc.OperationalError: (psycopg.OperationalError) connection failed: connection to server at "172.28.0.2", port 5432 failed: FATAL:  database "ai_service" does not exist
+ai_service_app  | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+ai_service_app  | 
+ai_service_app  | ERROR:    Application startup failed. Exiting.
+$ curl -sS http://localhost:8010/health | cat
+$ curl -sS http://localhost:8010/generate -H 'Content-Type: application/json' -d '{"text":"привет кто ты?"}' | jq -r .reply | sed -n '1,2p'
+
+--- create ai_service DB
+$ docker exec -i http_service_pg psql -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname='ai_service'"
+$ docker exec -i http_service_pg psql -U postgres -c "CREATE DATABASE ai_service"
+CREATE DATABASE
+$ docker exec -i http_service_pg psql -U postgres -lqt | grep ai_service | cat
+ ai_service   | postgres | UTF8     | libc            | en_US.utf8 | en_US.utf8 |            |           | 
+
+--- restart ai_service
+
+--- ai_service health
+
+--- ai_service generate
+
+--- ai_service logs now
+ai_service_app  |          ^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+ai_service_app  |     raise exc_value.with_traceback(exc_tb)
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+ai_service_app  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+ai_service_app  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+ai_service_app  |     return dialect.connect(*cargs, **cparams)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 629, in connect
+ai_service_app  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg.py", line 733, in connect
+ai_service_app  |     await_only(creator_fn(*arg, **kw))
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+ai_service_app  |     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+ai_service_app  |     value = await result
+ai_service_app  |             ^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/psycopg/connection_async.py", line 136, in connect
+ai_service_app  |     raise last_ex.with_traceback(None)
+ai_service_app  | psycopg.OperationalError: connection failed: connection to server at "172.28.0.2", port 5432 failed: FATAL:  database "ai_service" does not exist
+ai_service_app  | 
+ai_service_app  | The above exception was the direct cause of the following exception:
+ai_service_app  | 
+ai_service_app  | Traceback (most recent call last):
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/starlette/routing.py", line 694, in lifespan
+ai_service_app  |     async with self.lifespan_context(app) as maybe_state:
+ai_service_app  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/starlette/routing.py", line 571, in __aenter__
+ai_service_app  |     await self._router.startup()
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/starlette/routing.py", line 671, in startup
+ai_service_app  |     await handler()
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/ai_service/main.py", line 31, in _startup
+ai_service_app  |     await init_models(_engine)
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/ai_service/db.py", line 45, in init_models
+ai_service_app  |     async with engine.begin() as conn:
+ai_service_app  |                ^^^^^^^^^^^^^^
+ai_service_app  |   File "/usr/local/lib/python3.12/contextlib.py", line 210, in __aenter__
+ai_service_app  |     return await anext(self.gen)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/engine.py", line 1066, in begin
+ai_service_app  |     async with conn:
+ai_service_app  |                ^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/base.py", line 121, in __aenter__
+ai_service_app  |     return await self.start(is_ctxmanager=True)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/engine.py", line 274, in start
+ai_service_app  |     await greenlet_spawn(self.sync_engine.connect)
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+ai_service_app  |     result = context.throw(*sys.exc_info())
+ai_service_app  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3277, in connect
+ai_service_app  |     return self._connection_cls(self)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+ai_service_app  |     Connection._handle_dbapi_exception_noconnection(
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2440, in _handle_dbapi_exception_noconnection
+ai_service_app  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+ai_service_app  |     self._dbapi_connection = engine.raw_connection()
+ai_service_app  |                              ^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3301, in raw_connection
+ai_service_app  |     return self.pool.connect()
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+ai_service_app  |     return _ConnectionFairy._checkout(self)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+ai_service_app  |     fairy = _ConnectionRecord.checkout(pool)
+ai_service_app  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+ai_service_app  |     rec = pool._do_get()
+ai_service_app  |           ^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+ai_service_app  |     with util.safe_reraise():
+ai_service_app  |          ^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+ai_service_app  |     raise exc_value.with_traceback(exc_tb)
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+ai_service_app  |     return self._create_connection()
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+ai_service_app  |     return _ConnectionRecord(self)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+ai_service_app  |     self.__connect()
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+ai_service_app  |     with util.safe_reraise():
+ai_service_app  |          ^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+ai_service_app  |     raise exc_value.with_traceback(exc_tb)
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+ai_service_app  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+ai_service_app  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+ai_service_app  |     return dialect.connect(*cargs, **cparams)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 629, in connect
+ai_service_app  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg.py", line 733, in connect
+ai_service_app  |     await_only(creator_fn(*arg, **kw))
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+ai_service_app  |     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+ai_service_app  |     value = await result
+ai_service_app  |             ^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/psycopg/connection_async.py", line 136, in connect
+ai_service_app  |     raise last_ex.with_traceback(None)
+ai_service_app  | sqlalchemy.exc.OperationalError: (psycopg.OperationalError) connection failed: connection to server at "172.28.0.2", port 5432 failed: FATAL:  database "ai_service" does not exist
+ai_service_app  | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+ai_service_app  | 
+ai_service_app  | ERROR:    Application startup failed. Exiting.
+ai_service_app  | INFO:     Started server process [1]
+ai_service_app  | INFO:     Waiting for application startup.
+ai_service_app  | INFO:     Application startup complete.
+ai_service_app  | INFO:     Uvicorn running on http://0.0.0.0:8010 (Press CTRL+C to quit)
+
+--- container ps
+NAME                   IMAGE                   COMMAND                  SERVICE      CREATED          STATUS                  PORTS
+adm_pg                 postgres:16             "docker-entrypoint.s…"   adm_pg       22 hours ago     Up 22 hours             0.0.0.0:5544->5432/tcp
+adm_web                http-adm_web            "docker-php-entrypoi…"   adm_web      28 minutes ago   Up 28 minutes           0.0.0.0:8080->80/tcp
+ai_service_app         http-ai_service         "python -m uvicorn a…"   ai_service   6 minutes ago    Up 17 seconds           8000/tcp, 0.0.0.0:8010->8010/tcp
+http_service_app       http-app                "python -m uvicorn h…"   app          6 hours ago      Up 6 hours              0.0.0.0:8000->8000/tcp
+http_service_ngrok     ngrok/ngrok:3           "/nix/store/1qpvcjc0…"   ngrok        22 hours ago     Up 22 hours (healthy)   0.0.0.0:4040->4040/tcp
+http_service_pg        postgres:16-alpine      "docker-entrypoint.s…"   postgres     32 hours ago     Up 32 hours             0.0.0.0:5432->5432/tcp
+http_service_pgadmin   dpage/pgadmin4:latest   "/entrypoint.sh"         pgadmin      31 hours ago     Up 7 hours              443/tcp, 0.0.0.0:8082->80/tcp
+ollama                 ollama/ollama:latest    "/bin/ollama serve"      ollama       6 hours ago      Up 6 hours              0.0.0.0:11434->11434/tcp
+tg_bot_service         http-tg_bot             "python -m tg_bot_se…"   tg_bot       6 hours ago      Up 6 hours              8000/tcp
+
+--- ai_service /health
+{"ok":true,"models":["mistral:latest"]}
+--- ai_service /generate sample
+ Я - компьютерная программа, и не имею личности, поэтому мне не нужно звать себя каким-либо именем. Однако, если это вам понравится, могу называться AI или Асистент.
+
+Как вы? Какое любимое имя у тебя?
+
+--- logs ai_service (last 50)
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+ai_service_app  |     rec = pool._do_get()
+ai_service_app  |           ^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+ai_service_app  |     with util.safe_reraise():
+ai_service_app  |          ^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+ai_service_app  |     raise exc_value.with_traceback(exc_tb)
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+ai_service_app  |     return self._create_connection()
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+ai_service_app  |     return _ConnectionRecord(self)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+ai_service_app  |     self.__connect()
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+ai_service_app  |     with util.safe_reraise():
+ai_service_app  |          ^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+ai_service_app  |     raise exc_value.with_traceback(exc_tb)
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+ai_service_app  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+ai_service_app  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+ai_service_app  |     return dialect.connect(*cargs, **cparams)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 629, in connect
+ai_service_app  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg.py", line 733, in connect
+ai_service_app  |     await_only(creator_fn(*arg, **kw))
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+ai_service_app  |     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+ai_service_app  |     value = await result
+ai_service_app  |             ^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/psycopg/connection_async.py", line 136, in connect
+ai_service_app  |     raise last_ex.with_traceback(None)
+ai_service_app  | sqlalchemy.exc.OperationalError: (psycopg.OperationalError) connection failed: connection to server at "172.28.0.2", port 5432 failed: FATAL:  database "ai_service" does not exist
+ai_service_app  | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+ai_service_app  | 
+ai_service_app  | ERROR:    Application startup failed. Exiting.
+ai_service_app  | INFO:     Started server process [1]
+ai_service_app  | INFO:     Waiting for application startup.
+ai_service_app  | INFO:     Application startup complete.
+ai_service_app  | INFO:     Uvicorn running on http://0.0.0.0:8010 (Press CTRL+C to quit)
+ai_service_app  | INFO:     172.28.0.1:57192 - "GET /health HTTP/1.1" 200 OK
+ai_service_app  | INFO:     172.28.0.1:57196 - "POST /generate HTTP/1.1" 200 OK
+
+--- logs tg_bot (last 50)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.096485 seconds and try again... (tryings = 157, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.149668 seconds and try again... (tryings = 158, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.925898 seconds and try again... (tryings = 159, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.023651 seconds and try again... (tryings = 160, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.893392 seconds and try again... (tryings = 161, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.036010 seconds and try again... (tryings = 162, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.979555 seconds and try again... (tryings = 163, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.085669 seconds and try again... (tryings = 164, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.126417 seconds and try again... (tryings = 165, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.278147 seconds and try again... (tryings = 166, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.935314 seconds and try again... (tryings = 167, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.001632 seconds and try again... (tryings = 168, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.972255 seconds and try again... (tryings = 169, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.093808 seconds and try again... (tryings = 170, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.830486 seconds and try again... (tryings = 171, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.000497 seconds and try again... (tryings = 172, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.887530 seconds and try again... (tryings = 173, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.002027 seconds and try again... (tryings = 174, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.055775 seconds and try again... (tryings = 175, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.798072 seconds and try again... (tryings = 176, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.950928 seconds and try again... (tryings = 177, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.006888 seconds and try again... (tryings = 178, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.988195 seconds and try again... (tryings = 179, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.138748 seconds and try again... (tryings = 180, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientOSError: [Errno 104] Connection reset by peer
+tg_bot_service  | Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8251247466)
+
+--- in-bot curl to ai_service
+OCI runtime exec failed: exec failed: unable to start container process: exec: "curl": executable file not found in $PATH: unknown
+
+
+--- install curl in tg_bot and test connectivity
+$ docker exec tg_bot_service curl -sS -I https://api.telegram.org | head -n 1
+HTTP/2 302 
+$ docker exec tg_bot_service curl -sS -I https://google.com | head -n 1
+HTTP/2 301 
+$ docker exec tg_bot_service getent hosts api.telegram.org | cat
+2001:67c:4e8:f004::9 api.telegram.org
+
+--- restart tg_bot
+
+--- tail logs tg_bot (last 80)
+tg_bot_service  | Sleep for 4.946359 seconds and try again... (tryings = 142, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.966224 seconds and try again... (tryings = 143, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.063837 seconds and try again... (tryings = 144, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.905289 seconds and try again... (tryings = 145, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.028410 seconds and try again... (tryings = 146, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.203375 seconds and try again... (tryings = 147, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.036038 seconds and try again... (tryings = 148, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.154261 seconds and try again... (tryings = 149, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.146740 seconds and try again... (tryings = 150, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.028969 seconds and try again... (tryings = 151, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.007421 seconds and try again... (tryings = 152, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.031395 seconds and try again... (tryings = 153, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.777349 seconds and try again... (tryings = 154, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.126045 seconds and try again... (tryings = 155, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.022214 seconds and try again... (tryings = 156, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.096485 seconds and try again... (tryings = 157, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.149668 seconds and try again... (tryings = 158, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.925898 seconds and try again... (tryings = 159, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.023651 seconds and try again... (tryings = 160, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.893392 seconds and try again... (tryings = 161, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.036010 seconds and try again... (tryings = 162, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.979555 seconds and try again... (tryings = 163, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.085669 seconds and try again... (tryings = 164, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.126417 seconds and try again... (tryings = 165, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.278147 seconds and try again... (tryings = 166, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.935314 seconds and try again... (tryings = 167, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.001632 seconds and try again... (tryings = 168, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetwork
+--- one-shot logs tg_bot
+tg_bot_service  | Sleep for 4.946359 seconds and try again... (tryings = 142, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.966224 seconds and try again... (tryings = 143, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.063837 seconds and try again... (tryings = 144, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.905289 seconds and try again... (tryings = 145, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.028410 seconds and try again... (tryings = 146, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.203375 seconds and try again... (tryings = 147, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.036038 seconds and try again... (tryings = 148, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.154261 seconds and try again... (tryings = 149, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.146740 seconds and try again... (tryings = 150, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.028969 seconds and try again... (tryings = 151, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.007421 seconds and try again... (tryings = 152, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.031395 seconds and try again... (tryings = 153, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.777349 seconds and try again... (tryings = 154, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.126045 seconds and try again... (tryings = 155, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.022214 seconds and try again... (tryings = 156, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.096485 seconds and try again... (tryings = 157, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.149668 seconds and try again... (tryings = 158, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.925898 seconds and try again... (tryings = 159, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.023651 seconds and try again... (tryings = 160, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.893392 seconds and try again... (tryings = 161, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.036010 seconds and try again... (tryings = 162, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.979555 seconds and try again... (tryings = 163, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.085669 seconds and try again... (tryings = 164, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.126417 seconds and try again... (tryings = 165, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.278147 seconds and try again... (tryings = 166, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.935314 seconds and try again... (tryings = 167, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.001632 seconds and try again... (tryings = 168, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.972255 seconds and try again... (tryings = 169, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.093808 seconds and try again... (tryings = 170, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.830486 seconds and try again... (tryings = 171, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.000497 seconds and try again... (tryings = 172, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.887530 seconds and try again... (tryings = 173, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.002027 seconds and try again... (tryings = 174, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.055775 seconds and try again... (tryings = 175, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.798072 seconds and try again... (tryings = 176, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.950928 seconds and try again... (tryings = 177, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.006888 seconds and try again... (tryings = 178, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 4.988195 seconds and try again... (tryings = 179, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Connect call failed ('149.154.167.220', 443)]
+tg_bot_service  | Sleep for 5.138748 seconds and try again... (tryings = 180, bot id = 8251247466)
+tg_bot_service  | Failed to fetch updates - TelegramNetworkError: HTTP Client says - ClientOSError: [Errno 104] Connection reset by peer
+tg_bot_service  | Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8251247466)
+tg_bot_service  | Received SIGTERM signal
+
+--- IPv4 vs IPv6 from tg_bot
+$ docker exec tg_bot_service curl -4 -sS -I https://api.telegram.org | head -n 1
+HTTP/2 302 
+$ docker exec tg_bot_service curl -6 -sS -I https://api.telegram.org | head -n 1
+
+--- rebuild & restart tg_bot
+#0 building with "default" instance using docker driver
+
+#1 [tg_bot internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.06kB done
+#1 DONE 0.0s
+
+#2 [tg_bot] resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 1.8s
+
+#3 [tg_bot] docker-image://docker.io/docker/dockerfile:1@sha256:38387523653efa0039f8e1c89bb74a30504e76ee9f565e25c9a09841f9427b05
+#3 CACHED
+
+#4 [tg_bot internal] load metadata for docker.io/library/python:3.12-slim
+#4 DONE 0.0s
+
+#5 [tg_bot internal] load .dockerignore
+#5 transferring context: 161B done
+#5 DONE 0.0s
+
+#6 [tg_bot builder 1/5] FROM docker.io/library/python:3.12-slim
+#6 DONE 0.0s
+
+#7 [tg_bot internal] load build context
+#7 transferring context: 17.24kB done
+#7 DONE 0.0s
+
+#8 [tg_bot builder 2/5] WORKDIR /app
+#8 CACHED
+
+#9 [tg_bot builder 3/5] RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
+#9 CACHED
+
+#10 [tg_bot builder 4/5] COPY services ./services
+#10 DONE 0.1s
+
+#11 [tg_bot builder 5/5] RUN python -m pip install --upgrade pip &&     python -m pip wheel --wheel-dir /wheels services/tg_bot services/http_service services/ai_service
+#11 0.823 Requirement already satisfied: pip in /usr/local/lib/python3.12/site-packages (25.0.1)
+#11 1.452 Collecting pip
+#11 1.987   Downloading pip-25.2-py3-none-any.whl.metadata (4.7 kB)
+#11 2.062 Downloading pip-25.2-py3-none-any.whl (1.8 MB)
+#11 2.512    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 8.1 MB/s eta 0:00:00
+#11 2.520 Installing collected packages: pip
+#11 2.520   Attempting uninstall: pip
+#11 2.521     Found existing installation: pip 25.0.1
+#11 2.534     Uninstalling pip-25.0.1:
+#11 2.854       Successfully uninstalled pip-25.0.1
+#11 3.262 Successfully installed pip-25.2
+#11 3.262 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#11 3.700 Processing ./services/tg_bot
+#11 3.701   Installing build dependencies: started
+#11 5.945   Installing build dependencies: finished with status 'done'
+#11 5.945   Getting requirements to build wheel: started
+#11 6.413   Getting requirements to build wheel: finished with status 'done'
+#11 6.414   Preparing metadata (pyproject.toml): started
+#11 6.839   Preparing metadata (pyproject.toml): finished with status 'done'
+#11 6.840 Processing ./services/http_service
+#11 6.841   Installing build dependencies: started
+#11 9.062   Installing build dependencies: finished with status 'done'
+#11 9.063   Getting requirements to build wheel: started
+#11 9.514   Getting requirements to build wheel: finished with status 'done'
+#11 9.514   Preparing metadata (pyproject.toml): started
+#11 9.938   Preparing metadata (pyproject.toml): finished with status 'done'
+#11 9.939 Processing ./services/ai_service
+#11 9.940   Installing build dependencies: started
+#11 12.16   Installing build dependencies: finished with status 'done'
+#11 12.16   Getting requirements to build wheel: started
+#11 12.58   Getting requirements to build wheel: finished with status 'done'
+#11 12.58   Preparing metadata (pyproject.toml): started
+#11 12.99   Preparing metadata (pyproject.toml): finished with status 'done'
+#11 13.59 Collecting aiogram>=3.12 (from tg_bot_service==0.1.0)
+#11 14.11   Downloading aiogram-3.21.0-py3-none-any.whl.metadata (7.6 kB)
+#11 14.21 Collecting httpx>=0.27 (from tg_bot_service==0.1.0)
+#11 14.28   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+#11 14.42 Collecting fastapi>=0.110 (from http_service==0.2.0)
+#11 14.49   Downloading fastapi-0.116.1-py3-none-any.whl.metadata (28 kB)
+#11 14.63 Collecting uvicorn>=0.27 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 14.70   Downloading uvicorn-0.35.0-py3-none-any.whl.metadata (6.5 kB)
+#11 14.79 Collecting tenacity>=8.2 (from http_service==0.2.0)
+#11 14.86   Downloading tenacity-9.1.2-py3-none-any.whl.metadata (1.2 kB)
+#11 15.10 Collecting pydantic>=2.6 (from http_service==0.2.0)
+#11 15.17   Downloading pydantic-2.11.7-py3-none-any.whl.metadata (67 kB)
+#11 15.33 Collecting pydantic-settings>=2.2 (from http_service==0.2.0)
+#11 15.40   Downloading pydantic_settings-2.10.1-py3-none-any.whl.metadata (3.4 kB)
+#11 15.48 Collecting structlog>=24.1 (from http_service==0.2.0)
+#11 15.55   Downloading structlog-25.4.0-py3-none-any.whl.metadata (7.6 kB)
+#11 15.83 Collecting sqlalchemy>=2.0 (from http_service==0.2.0)
+#11 15.90   Downloading sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (9.6 kB)
+#11 15.99 Collecting psycopg>=3.2 (from psycopg[binary]>=3.2->http_service==0.2.0)
+#11 16.05   Downloading psycopg-3.2.9-py3-none-any.whl.metadata (4.5 kB)
+#11 16.13 Collecting alembic>=1.13 (from http_service==0.2.0)
+#11 16.20   Downloading alembic-1.16.4-py3-none-any.whl.metadata (7.3 kB)
+#11 16.27 Collecting aiofiles<24.2,>=23.2.1 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 16.34   Downloading aiofiles-24.1.0-py3-none-any.whl.metadata (10 kB)
+#11 16.71 Collecting aiohttp<3.13,>=3.9.0 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 16.78   Downloading aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.7 kB)
+#11 16.85 Collecting certifi>=2023.7.22 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 16.92   Downloading certifi-2025.8.3-py3-none-any.whl.metadata (2.4 kB)
+#11 16.99 Collecting magic-filter<1.1,>=1.0.12 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.06   Downloading magic_filter-1.0.12-py3-none-any.whl.metadata (1.5 kB)
+#11 17.14 Collecting typing-extensions<=5.0,>=4.7.0 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.21   Downloading typing_extensions-4.14.1-py3-none-any.whl.metadata (3.0 kB)
+#11 17.29 Collecting aiohappyeyeballs>=2.5.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.36   Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl.metadata (5.9 kB)
+#11 17.43 Collecting aiosignal>=1.4.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.50   Downloading aiosignal-1.4.0-py3-none-any.whl.metadata (3.7 kB)
+#11 17.57 Collecting attrs>=17.3.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.64   Downloading attrs-25.3.0-py3-none-any.whl.metadata (10 kB)
+#11 17.74 Collecting frozenlist>=1.1.1 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.81   Downloading frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (18 kB)
+#11 17.99 Collecting multidict<7.0,>=4.5 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 18.06   Downloading multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.3 kB)
+#11 18.15 Collecting propcache>=0.2.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 18.22   Downloading propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (12 kB)
+#11 18.42 Collecting yarl<2.0,>=1.17.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 18.49   Downloading yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (73 kB)
+#11 18.59 Collecting annotated-types>=0.6.0 (from pydantic>=2.6->http_service==0.2.0)
+#11 18.66   Downloading annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+#11 19.05 Collecting pydantic-core==2.33.2 (from pydantic>=2.6->http_service==0.2.0)
+#11 19.12   Downloading pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)
+#11 19.20 Collecting typing-inspection>=0.4.0 (from pydantic>=2.6->http_service==0.2.0)
+#11 19.27   Downloading typing_inspection-0.4.1-py3-none-any.whl.metadata (2.6 kB)
+#11 19.35 Collecting idna>=2.0 (from yarl<2.0,>=1.17.0->aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 19.42   Downloading idna-3.10-py3-none-any.whl.metadata (10 kB)
+#11 19.51 Collecting Mako (from alembic>=1.13->http_service==0.2.0)
+#11 19.58   Downloading mako-1.3.10-py3-none-any.whl.metadata (2.9 kB)
+#11 19.66 Collecting starlette<0.48.0,>=0.40.0 (from fastapi>=0.110->http_service==0.2.0)
+#11 19.73   Downloading starlette-0.47.2-py3-none-any.whl.metadata (6.2 kB)
+#11 19.82 Collecting anyio<5,>=3.6.2 (from starlette<0.48.0,>=0.40.0->fastapi>=0.110->http_service==0.2.0)
+#11 19.89   Downloading anyio-4.10.0-py3-none-any.whl.metadata (4.0 kB)
+#11 19.97 Collecting sniffio>=1.1 (from anyio<5,>=3.6.2->starlette<0.48.0,>=0.40.0->fastapi>=0.110->http_service==0.2.0)
+#11 20.03   Downloading sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+#11 20.12 Collecting httpcore==1.* (from httpx>=0.27->tg_bot_service==0.1.0)
+#11 20.19   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+#11 20.27 Collecting h11>=0.16 (from httpcore==1.*->httpx>=0.27->tg_bot_service==0.1.0)
+#11 20.33   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+#11 20.47 Collecting psycopg-binary==3.2.9 (from psycopg[binary]>=3.2->http_service==0.2.0)
+#11 20.54   Downloading psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (2.9 kB)
+#11 20.62 Collecting python-dotenv>=0.21.0 (from pydantic-settings>=2.2->http_service==0.2.0)
+#11 20.69   Downloading python_dotenv-1.1.1-py3-none-any.whl.metadata (24 kB)
+#11 20.82 Collecting greenlet>=1 (from sqlalchemy>=2.0->http_service==0.2.0)
+#11 20.89   Downloading greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (4.1 kB)
+#11 20.97 Collecting click>=7.0 (from uvicorn>=0.27->uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.04   Downloading click-8.2.1-py3-none-any.whl.metadata (2.5 kB)
+#11 21.12 Collecting httptools>=0.6.3 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.19   Downloading httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (3.6 kB)
+#11 21.27 Collecting pyyaml>=5.1 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.34   Downloading PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (2.1 kB)
+#11 21.42 Collecting uvloop>=0.15.1 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.49   Downloading uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+#11 21.59 Collecting watchfiles>=0.13 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.66   Downloading watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+#11 21.79 Collecting websockets>=10.4 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.86   Downloading websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)
+#11 21.96 Collecting MarkupSafe>=0.9.2 (from Mako->alembic>=1.13->http_service==0.2.0)
+#11 22.03   Downloading MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.0 kB)
+#11 22.10 Downloading aiogram-3.21.0-py3-none-any.whl (677 kB)
+#11 22.29    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 677.3/677.3 kB 5.6 MB/s  0:00:00
+#11 22.36 Downloading aiofiles-24.1.0-py3-none-any.whl (15 kB)
+#11 22.43 Downloading aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.7 MB)
+#11 22.55    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 14.0 MB/s  0:00:00
+#11 22.62 Downloading magic_filter-1.0.12-py3-none-any.whl (11 kB)
+#11 22.68 Downloading multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (256 kB)
+#11 22.76 Downloading pydantic-2.11.7-py3-none-any.whl (444 kB)
+#11 22.84 Downloading pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.0 MB)
+#11 22.92    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 25.8 MB/s  0:00:00
+#11 22.98 Downloading typing_extensions-4.14.1-py3-none-any.whl (43 kB)
+#11 23.05 Downloading yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (355 kB)
+#11 23.13 Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl (15 kB)
+#11 23.20 Downloading aiosignal-1.4.0-py3-none-any.whl (7.5 kB)
+#11 23.27 Downloading alembic-1.16.4-py3-none-any.whl (247 kB)
+#11 23.34 Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+#11 23.41 Downloading attrs-25.3.0-py3-none-any.whl (63 kB)
+#11 23.48 Downloading certifi-2025.8.3-py3-none-any.whl (161 kB)
+#11 23.55 Downloading fastapi-0.116.1-py3-none-any.whl (95 kB)
+#11 23.61 Downloading starlette-0.47.2-py3-none-any.whl (72 kB)
+#11 23.68 Downloading anyio-4.10.0-py3-none-any.whl (107 kB)
+#11 23.75 Downloading frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (241 kB)
+#11 23.83 Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+#11 23.89 Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+#11 23.97 Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+#11 24.04 Downloading idna-3.10-py3-none-any.whl (70 kB)
+#11 24.13 Downloading propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (224 kB)
+#11 24.20 Downloading psycopg-3.2.9-py3-none-any.whl (202 kB)
+#11 24.28 Downloading psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (4.4 MB)
+#11 24.47    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.4/4.4 MB 22.6 MB/s  0:00:00
+#11 24.54 Downloading pydantic_settings-2.10.1-py3-none-any.whl (45 kB)
+#11 24.61 Downloading python_dotenv-1.1.1-py3-none-any.whl (20 kB)
+#11 24.68 Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+#11 24.75 Downloading sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+#11 25.15    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 12.1 MB/s  0:00:00
+#11 25.22 Downloading greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (607 kB)
+#11 25.24    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 607.6/607.6 kB 28.6 MB/s  0:00:00
+#11 25.31 Downloading structlog-25.4.0-py3-none-any.whl (68 kB)
+#11 25.38 Downloading tenacity-9.1.2-py3-none-any.whl (28 kB)
+#11 25.45 Downloading typing_inspection-0.4.1-py3-none-any.whl (14 kB)
+#11 25.52 Downloading uvicorn-0.35.0-py3-none-any.whl (66 kB)
+#11 25.59 Downloading click-8.2.1-py3-none-any.whl (102 kB)
+#11 25.66 Downloading httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (510 kB)
+#11 25.75 Downloading PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (767 kB)
+#11 25.78    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 767.5/767.5 kB 28.9 MB/s  0:00:00
+#11 26.22 Downloading uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (4.7 MB)
+#11 26.73    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.7/4.7 MB 10.2 MB/s  0:00:00
+#11 26.80 Downloading watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (452 kB)
+#11 26.90 Downloading websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (182 kB)
+#11 26.99 Downloading mako-1.3.10-py3-none-any.whl (78 kB)
+#11 27.06 Downloading MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (23 kB)
+#11 27.09 Saved /wheels/aiogram-3.21.0-py3-none-any.whl
+#11 27.09 Saved /wheels/aiofiles-24.1.0-py3-none-any.whl
+#11 27.09 Saved /wheels/aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.09 Saved /wheels/magic_filter-1.0.12-py3-none-any.whl
+#11 27.09 Saved /wheels/multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
+#11 27.10 Saved /wheels/pydantic-2.11.7-py3-none-any.whl
+#11 27.10 Saved /wheels/pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.10 Saved /wheels/typing_extensions-4.14.1-py3-none-any.whl
+#11 27.10 Saved /wheels/yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.10 Saved /wheels/aiohappyeyeballs-2.6.1-py3-none-any.whl
+#11 27.10 Saved /wheels/aiosignal-1.4.0-py3-none-any.whl
+#11 27.10 Saved /wheels/alembic-1.16.4-py3-none-any.whl
+#11 27.10 Saved /wheels/annotated_types-0.7.0-py3-none-any.whl
+#11 27.10 Saved /wheels/attrs-25.3.0-py3-none-any.whl
+#11 27.10 Saved /wheels/certifi-2025.8.3-py3-none-any.whl
+#11 27.10 Saved /wheels/fastapi-0.116.1-py3-none-any.whl
+#11 27.10 Saved /wheels/starlette-0.47.2-py3-none-any.whl
+#11 27.10 Saved /wheels/anyio-4.10.0-py3-none-any.whl
+#11 27.10 Saved /wheels/frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.10 Saved /wheels/httpx-0.28.1-py3-none-any.whl
+#11 27.10 Saved /wheels/httpcore-1.0.9-py3-none-any.whl
+#11 27.10 Saved /wheels/h11-0.16.0-py3-none-any.whl
+#11 27.10 Saved /wheels/idna-3.10-py3-none-any.whl
+#11 27.10 Saved /wheels/propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.10 Saved /wheels/psycopg-3.2.9-py3-none-any.whl
+#11 27.10 Saved /wheels/psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.10 Saved /wheels/pydantic_settings-2.10.1-py3-none-any.whl
+#11 27.10 Saved /wheels/python_dotenv-1.1.1-py3-none-any.whl
+#11 27.10 Saved /wheels/sniffio-1.3.1-py3-none-any.whl
+#11 27.10 Saved /wheels/sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.10 Saved /wheels/greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+#11 27.10 Saved /wheels/structlog-25.4.0-py3-none-any.whl
+#11 27.10 Saved /wheels/tenacity-9.1.2-py3-none-any.whl
+#11 27.10 Saved /wheels/typing_inspection-0.4.1-py3-none-any.whl
+#11 27.10 Saved /wheels/uvicorn-0.35.0-py3-none-any.whl
+#11 27.10 Saved /wheels/click-8.2.1-py3-none-any.whl
+#11 27.10 Saved /wheels/httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.10 Saved /wheels/PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.10 Saved /wheels/uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.10 Saved /wheels/watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.10 Saved /wheels/websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.10 Saved /wheels/mako-1.3.10-py3-none-any.whl
+#11 27.10 Saved /wheels/MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.10 Building wheels for collected packages: tg_bot_service, http_service, ai_service
+#11 27.10   Building wheel for tg_bot_service (pyproject.toml): started
+#11 27.54   Building wheel for tg_bot_service (pyproject.toml): finished with status 'done'
+#11 27.54   Created wheel for tg_bot_service: filename=tg_bot_service-0.1.0-py3-none-any.whl size=5567 sha256=2fe895c116dda7a20db8604293e3d28069c333a013b23d07911fb4309c33959b
+#11 27.54   Stored in directory: /tmp/pip-ephem-wheel-cache-d73zp1pz/wheels/2c/d3/10/b9d88edc85721a7ca40d90d1af0ce341bd0e3aa1c43c5efecc
+#11 27.54   Building wheel for http_service (pyproject.toml): started
+#11 27.98   Building wheel for http_service (pyproject.toml): finished with status 'done'
+#11 27.98   Created wheel for http_service: filename=http_service-0.2.0-py3-none-any.whl size=11373 sha256=f407330c93c4bf6f1da602f1e776ac2af57edf31767684760b7319bff16ca80d
+#11 27.98   Stored in directory: /tmp/pip-ephem-wheel-cache-d73zp1pz/wheels/d9/54/a6/db0b000b08e9a9e6315c20f6da687cf6ec5a47fe05624c67b8
+#11 27.99   Building wheel for ai_service (pyproject.toml): started
+#11 28.41   Building wheel for ai_service (pyproject.toml): finished with status 'done'
+#11 28.41   Created wheel for ai_service: filename=ai_service-0.1.0-py3-none-any.whl size=4085 sha256=82d004cee464569f5623761a6f3cb51505f35d69bc11a9f586b0a7718e201d4d
+#11 28.41   Stored in directory: /tmp/pip-ephem-wheel-cache-d73zp1pz/wheels/f3/b1/e1/ee5a0ab2dff8de4f669561f007c12531507078b9ab242eac96
+#11 28.41 Successfully built tg_bot_service http_service ai_service
+#11 DONE 28.7s
+
+#12 [tg_bot runtime 3/5] RUN useradd -m appuser
+#12 CACHED
+
+#13 [tg_bot runtime 4/5] COPY --from=builder /wheels /wheels
+#13 DONE 0.1s
+
+#14 [tg_bot runtime 5/5] RUN python -m pip install --no-cache-dir /wheels/*
+#14 0.753 Defaulting to user installation because normal site-packages is not writeable
+#14 0.843 Processing /wheels/MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.845 Processing /wheels/PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.846 Processing /wheels/ai_service-0.1.0-py3-none-any.whl
+#14 0.847 Processing /wheels/aiofiles-24.1.0-py3-none-any.whl
+#14 0.847 Processing /wheels/aiogram-3.21.0-py3-none-any.whl
+#14 0.853 Processing /wheels/aiohappyeyeballs-2.6.1-py3-none-any.whl
+#14 0.854 Processing /wheels/aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.856 Processing /wheels/aiosignal-1.4.0-py3-none-any.whl
+#14 0.857 Processing /wheels/alembic-1.16.4-py3-none-any.whl
+#14 0.858 Processing /wheels/annotated_types-0.7.0-py3-none-any.whl
+#14 0.859 Processing /wheels/anyio-4.10.0-py3-none-any.whl
+#14 0.860 Processing /wheels/attrs-25.3.0-py3-none-any.whl
+#14 0.864 Processing /wheels/certifi-2025.8.3-py3-none-any.whl
+#14 0.864 Processing /wheels/click-8.2.1-py3-none-any.whl
+#14 0.865 Processing /wheels/fastapi-0.116.1-py3-none-any.whl
+#14 0.868 Processing /wheels/frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.869 Processing /wheels/greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+#14 0.871 Processing /wheels/h11-0.16.0-py3-none-any.whl
+#14 0.871 Processing /wheels/http_service-0.2.0-py3-none-any.whl
+#14 0.872 Processing /wheels/httpcore-1.0.9-py3-none-any.whl
+#14 0.874 Processing /wheels/httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.875 Processing /wheels/httpx-0.28.1-py3-none-any.whl
+#14 0.876 Processing /wheels/idna-3.10-py3-none-any.whl
+#14 0.877 Processing /wheels/magic_filter-1.0.12-py3-none-any.whl
+#14 0.878 Processing /wheels/mako-1.3.10-py3-none-any.whl
+#14 0.879 Processing /wheels/multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
+#14 0.880 Processing /wheels/propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.881 Processing /wheels/psycopg-3.2.9-py3-none-any.whl
+#14 0.884 Processing /wheels/psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.887 Processing /wheels/pydantic-2.11.7-py3-none-any.whl
+#14 0.889 Processing /wheels/pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.891 Processing /wheels/pydantic_settings-2.10.1-py3-none-any.whl
+#14 0.893 Processing /wheels/python_dotenv-1.1.1-py3-none-any.whl
+#14 0.894 Processing /wheels/sniffio-1.3.1-py3-none-any.whl
+#14 0.894 Processing /wheels/sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.901 Processing /wheels/starlette-0.47.2-py3-none-any.whl
+#14 0.902 Processing /wheels/structlog-25.4.0-py3-none-any.whl
+#14 0.903 Processing /wheels/tenacity-9.1.2-py3-none-any.whl
+#14 0.904 Processing /wheels/tg_bot_service-0.1.0-py3-none-any.whl
+#14 0.905 Processing /wheels/typing_extensions-4.14.1-py3-none-any.whl
+#14 0.905 Processing /wheels/typing_inspection-0.4.1-py3-none-any.whl
+#14 0.906 Processing /wheels/uvicorn-0.35.0-py3-none-any.whl
+#14 0.907 Processing /wheels/uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.912 Processing /wheels/watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.913 Processing /wheels/websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.914 Processing /wheels/yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.985 Installing collected packages: websockets, uvloop, typing-extensions, tenacity, structlog, sniffio, PyYAML, python-dotenv, psycopg-binary, propcache, multidict, MarkupSafe, magic-filter, idna, httptools, h11, greenlet, frozenlist, click, certifi, attrs, annotated-types, aiohappyeyeballs, aiofiles, yarl, uvicorn, typing-inspection, sqlalchemy, pydantic-core, psycopg, mako, httpcore, anyio, aiosignal, watchfiles, starlette, pydantic, httpx, alembic, aiohttp, pydantic-settings, fastapi, aiogram, tg-bot-service, http-service, ai-service
+#14 1.047   WARNING: The script websockets is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 1.047   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 1.278   WARNING: The script dotenv is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 1.278   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 1.784   WARNING: The script uvicorn is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 1.784   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 2.557   WARNING: The script mako-render is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 2.557   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 2.702   WARNING: The script watchfiles is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 2.702   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 2.945   WARNING: The script httpx is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 2.945   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 3.037   WARNING: The script alembic is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 3.037   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 3.232   WARNING: The script fastapi is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 3.232   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 3.521 Successfully installed MarkupSafe-3.0.2 PyYAML-6.0.2 ai-service-0.1.0 aiofiles-24.1.0 aiogram-3.21.0 aiohappyeyeballs-2.6.1 aiohttp-3.12.15 aiosignal-1.4.0 alembic-1.16.4 annotated-types-0.7.0 anyio-4.10.0 attrs-25.3.0 certifi-2025.8.3 click-8.2.1 fastapi-0.116.1 frozenlist-1.7.0 greenlet-3.2.4 h11-0.16.0 http-service-0.2.0 httpcore-1.0.9 httptools-0.6.4 httpx-0.28.1 idna-3.10 magic-filter-1.0.12 mako-1.3.10 multidict-6.6.4 propcache-0.3.2 psycopg-3.2.9 psycopg-binary-3.2.9 pydantic-2.11.7 pydantic-core-2.33.2 pydantic-settings-2.10.1 python-dotenv-1.1.1 sniffio-1.3.1 sqlalchemy-2.0.43 starlette-0.47.2 structlog-25.4.0 tenacity-9.1.2 tg-bot-service-0.1.0 typing-extensions-4.14.1 typing-inspection-0.4.1 uvicorn-0.35.0 uvloop-0.21.0 watchfiles-1.1.0 websockets-15.0.1 yarl-1.20.1
+#14 4.142 
+#14 4.142 [notice] A new release of pip is available: 25.0.1 -> 25.2
+#14 4.142 [notice] To update, run: pip install --upgrade pip
+#14 DONE 4.2s
+
+#15 [tg_bot] exporting to image
+#15 exporting layers
+#15 exporting layers 0.2s done
+#15 writing image sha256:29c3fc9172833286df1dfb538f8f4ada52aa549f40e5b24ad9334c48d47a1e71 done
+#15 naming to docker.io/library/http-tg_bot 0.0s done
+#15 DONE 0.3s
+
+#16 [tg_bot] resolving provenance for metadata file
+#16 DONE 0.0s
+
+--- tail logs tg_bot (last 80)
+
+--- tg_bot recent logs
+tg_bot_service  | Traceback (most recent call last):
+tg_bot_service  |   File "<frozen runpy>", line 198, in _run_module_as_main
+tg_bot_service  |   File "<frozen runpy>", line 88, in _run_code
+tg_bot_service  |   File "/home/appuser/.local/lib/python3.12/site-packages/tg_bot_service/main.py", line 125, in <module>
+tg_bot_service  |     run()
+tg_bot_service  |   File "/home/appuser/.local/lib/python3.12/site-packages/tg_bot_service/main.py", line 121, in run
+tg_bot_service  |     asyncio.run(run_async())
+tg_bot_service  |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+tg_bot_service  |     return runner.run(main)
+tg_bot_service  |            ^^^^^^^^^^^^^^^^
+tg_bot_service  |   File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+tg_bot_service  |     return self._loop.run_until_complete(task)
+tg_bot_service  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tg_bot_service  |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+tg_bot_service  |   File "/home/appuser/.local/lib/python3.12/site-packages/tg_bot_service/main.py", line 108, in run_async
+tg_bot_service  |     session = AiohttpSession(connector=connector)
+tg_bot_service  |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tg_bot_service  |   File "/home/appuser/.local/lib/python3.12/site-packages/aiogram/client/session/aiohttp.py", line 95, in __init__
+tg_bot_service  |     super().__init__(**kwargs)
+tg_bot_service  | TypeError: BaseSession.__init__() got an unexpected keyword argument 'connector'
+
+--- aiohttp connectivity test from tg_bot (IPv4)
+
+--- rebuild & up tg_bot (fix session)
+#0 building with "default" instance using docker driver
+
+#1 [tg_bot internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.06kB done
+#1 DONE 0.0s
+
+#2 [tg_bot] resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 0.8s
+
+#3 [tg_bot] docker-image://docker.io/docker/dockerfile:1@sha256:38387523653efa0039f8e1c89bb74a30504e76ee9f565e25c9a09841f9427b05
+#3 CACHED
+
+#4 [tg_bot internal] load metadata for docker.io/library/python:3.12-slim
+#4 DONE 0.0s
+
+#5 [tg_bot internal] load .dockerignore
+#5 transferring context: 161B done
+#5 DONE 0.0s
+
+#6 [tg_bot builder 1/5] FROM docker.io/library/python:3.12-slim
+#6 DONE 0.0s
+
+#7 [tg_bot internal] load build context
+#7 transferring context: 9.93kB done
+#7 DONE 0.0s
+
+#8 [tg_bot builder 2/5] WORKDIR /app
+#8 CACHED
+
+#9 [tg_bot builder 3/5] RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
+#9 CACHED
+
+#10 [tg_bot builder 4/5] COPY services ./services
+#10 DONE 0.1s
+
+#11 [tg_bot builder 5/5] RUN python -m pip install --upgrade pip &&     python -m pip wheel --wheel-dir /wheels services/tg_bot services/http_service services/ai_service
+#11 0.821 Requirement already satisfied: pip in /usr/local/lib/python3.12/site-packages (25.0.1)
+#11 1.416 Collecting pip
+#11 1.937   Downloading pip-25.2-py3-none-any.whl.metadata (4.7 kB)
+#11 2.013 Downloading pip-25.2-py3-none-any.whl (1.8 MB)
+#11 2.550    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 5.6 MB/s eta 0:00:00
+#11 2.558 Installing collected packages: pip
+#11 2.558   Attempting uninstall: pip
+#11 2.559     Found existing installation: pip 25.0.1
+#11 2.573     Uninstalling pip-25.0.1:
+#11 2.904       Successfully uninstalled pip-25.0.1
+#11 3.309 Successfully installed pip-25.2
+#11 3.310 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#11 3.748 Processing ./services/tg_bot
+#11 3.749   Installing build dependencies: started
+#11 5.985   Installing build dependencies: finished with status 'done'
+#11 5.985   Getting requirements to build wheel: started
+#11 6.453   Getting requirements to build wheel: finished with status 'done'
+#11 6.453   Preparing metadata (pyproject.toml): started
+#11 6.872   Preparing metadata (pyproject.toml): finished with status 'done'
+#11 6.873 Processing ./services/http_service
+#11 6.874   Installing build dependencies: started
+#11 9.112   Installing build dependencies: finished with status 'done'
+#11 9.113   Getting requirements to build wheel: started
+#11 9.569   Getting requirements to build wheel: finished with status 'done'
+#11 9.570   Preparing metadata (pyproject.toml): started
+#11 10.00   Preparing metadata (pyproject.toml): finished with status 'done'
+#11 10.00 Processing ./services/ai_service
+#11 10.00   Installing build dependencies: started
+#11 12.24   Installing build dependencies: finished with status 'done'
+#11 12.24   Getting requirements to build wheel: started
+#11 12.67   Getting requirements to build wheel: finished with status 'done'
+#11 12.67   Preparing metadata (pyproject.toml): started
+#11 13.10   Preparing metadata (pyproject.toml): finished with status 'done'
+#11 13.70 Collecting aiogram>=3.12 (from tg_bot_service==0.1.0)
+#11 14.20   Downloading aiogram-3.21.0-py3-none-any.whl.metadata (7.6 kB)
+#11 14.30 Collecting httpx>=0.27 (from tg_bot_service==0.1.0)
+#11 14.36   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+#11 14.50 Collecting fastapi>=0.110 (from http_service==0.2.0)
+#11 14.57   Downloading fastapi-0.116.1-py3-none-any.whl.metadata (28 kB)
+#11 14.70 Collecting uvicorn>=0.27 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 14.77   Downloading uvicorn-0.35.0-py3-none-any.whl.metadata (6.5 kB)
+#11 14.85 Collecting tenacity>=8.2 (from http_service==0.2.0)
+#11 14.92   Downloading tenacity-9.1.2-py3-none-any.whl.metadata (1.2 kB)
+#11 15.16 Collecting pydantic>=2.6 (from http_service==0.2.0)
+#11 15.22   Downloading pydantic-2.11.7-py3-none-any.whl.metadata (67 kB)
+#11 15.38 Collecting pydantic-settings>=2.2 (from http_service==0.2.0)
+#11 15.45   Downloading pydantic_settings-2.10.1-py3-none-any.whl.metadata (3.4 kB)
+#11 15.53 Collecting structlog>=24.1 (from http_service==0.2.0)
+#11 15.60   Downloading structlog-25.4.0-py3-none-any.whl.metadata (7.6 kB)
+#11 15.90 Collecting sqlalchemy>=2.0 (from http_service==0.2.0)
+#11 15.97   Downloading sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (9.6 kB)
+#11 16.05 Collecting psycopg>=3.2 (from psycopg[binary]>=3.2->http_service==0.2.0)
+#11 16.11   Downloading psycopg-3.2.9-py3-none-any.whl.metadata (4.5 kB)
+#11 16.19 Collecting alembic>=1.13 (from http_service==0.2.0)
+#11 16.26   Downloading alembic-1.16.4-py3-none-any.whl.metadata (7.3 kB)
+#11 16.33 Collecting aiofiles<24.2,>=23.2.1 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 16.39   Downloading aiofiles-24.1.0-py3-none-any.whl.metadata (10 kB)
+#11 16.76 Collecting aiohttp<3.13,>=3.9.0 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 16.83   Downloading aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.7 kB)
+#11 16.90 Collecting certifi>=2023.7.22 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 16.97   Downloading certifi-2025.8.3-py3-none-any.whl.metadata (2.4 kB)
+#11 17.04 Collecting magic-filter<1.1,>=1.0.12 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.11   Downloading magic_filter-1.0.12-py3-none-any.whl.metadata (1.5 kB)
+#11 17.19 Collecting typing-extensions<=5.0,>=4.7.0 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.30   Downloading typing_extensions-4.14.1-py3-none-any.whl.metadata (3.0 kB)
+#11 17.38 Collecting aiohappyeyeballs>=2.5.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.44   Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl.metadata (5.9 kB)
+#11 17.51 Collecting aiosignal>=1.4.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.58   Downloading aiosignal-1.4.0-py3-none-any.whl.metadata (3.7 kB)
+#11 17.65 Collecting attrs>=17.3.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.71   Downloading attrs-25.3.0-py3-none-any.whl.metadata (10 kB)
+#11 17.81 Collecting frozenlist>=1.1.1 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.88   Downloading frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (18 kB)
+#11 18.06 Collecting multidict<7.0,>=4.5 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 18.12   Downloading multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.3 kB)
+#11 18.21 Collecting propcache>=0.2.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 18.28   Downloading propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (12 kB)
+#11 18.48 Collecting yarl<2.0,>=1.17.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 18.55   Downloading yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (73 kB)
+#11 18.65 Collecting annotated-types>=0.6.0 (from pydantic>=2.6->http_service==0.2.0)
+#11 18.72   Downloading annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+#11 19.10 Collecting pydantic-core==2.33.2 (from pydantic>=2.6->http_service==0.2.0)
+#11 19.17   Downloading pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)
+#11 19.25 Collecting typing-inspection>=0.4.0 (from pydantic>=2.6->http_service==0.2.0)
+#11 19.31   Downloading typing_inspection-0.4.1-py3-none-any.whl.metadata (2.6 kB)
+#11 19.39 Collecting idna>=2.0 (from yarl<2.0,>=1.17.0->aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 19.45   Downloading idna-3.10-py3-none-any.whl.metadata (10 kB)
+#11 19.54 Collecting Mako (from alembic>=1.13->http_service==0.2.0)
+#11 19.61   Downloading mako-1.3.10-py3-none-any.whl.metadata (2.9 kB)
+#11 19.69 Collecting starlette<0.48.0,>=0.40.0 (from fastapi>=0.110->http_service==0.2.0)
+#11 19.76   Downloading starlette-0.47.2-py3-none-any.whl.metadata (6.2 kB)
+#11 19.85 Collecting anyio<5,>=3.6.2 (from starlette<0.48.0,>=0.40.0->fastapi>=0.110->http_service==0.2.0)
+#11 19.92   Downloading anyio-4.10.0-py3-none-any.whl.metadata (4.0 kB)
+#11 19.99 Collecting sniffio>=1.1 (from anyio<5,>=3.6.2->starlette<0.48.0,>=0.40.0->fastapi>=0.110->http_service==0.2.0)
+#11 20.06   Downloading sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+#11 20.13 Collecting httpcore==1.* (from httpx>=0.27->tg_bot_service==0.1.0)
+#11 20.20   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+#11 20.28 Collecting h11>=0.16 (from httpcore==1.*->httpx>=0.27->tg_bot_service==0.1.0)
+#11 20.34   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+#11 20.48 Collecting psycopg-binary==3.2.9 (from psycopg[binary]>=3.2->http_service==0.2.0)
+#11 20.54   Downloading psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (2.9 kB)
+#11 20.63 Collecting python-dotenv>=0.21.0 (from pydantic-settings>=2.2->http_service==0.2.0)
+#11 20.70   Downloading python_dotenv-1.1.1-py3-none-any.whl.metadata (24 kB)
+#11 20.83 Collecting greenlet>=1 (from sqlalchemy>=2.0->http_service==0.2.0)
+#11 20.89   Downloading greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (4.1 kB)
+#11 20.97 Collecting click>=7.0 (from uvicorn>=0.27->uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.04   Downloading click-8.2.1-py3-none-any.whl.metadata (2.5 kB)
+#11 21.12 Collecting httptools>=0.6.3 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.18   Downloading httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (3.6 kB)
+#11 21.27 Collecting pyyaml>=5.1 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.33   Downloading PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (2.1 kB)
+#11 21.42 Collecting uvloop>=0.15.1 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.48   Downloading uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+#11 21.58 Collecting watchfiles>=0.13 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.65   Downloading watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+#11 21.79 Collecting websockets>=10.4 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.86   Downloading websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)
+#11 21.95 Collecting MarkupSafe>=0.9.2 (from Mako->alembic>=1.13->http_service==0.2.0)
+#11 22.02   Downloading MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.0 kB)
+#11 22.08 Downloading aiogram-3.21.0-py3-none-any.whl (677 kB)
+#11 22.26    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 677.3/677.3 kB 5.7 MB/s  0:00:00
+#11 22.33 Downloading aiofiles-24.1.0-py3-none-any.whl (15 kB)
+#11 22.39 Downloading aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.7 MB)
+#11 22.51    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 14.9 MB/s  0:00:00
+#11 22.57 Downloading magic_filter-1.0.12-py3-none-any.whl (11 kB)
+#11 22.64 Downloading multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (256 kB)
+#11 22.71 Downloading pydantic-2.11.7-py3-none-any.whl (444 kB)
+#11 22.78 Downloading pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.0 MB)
+#11 22.85    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 27.9 MB/s  0:00:00
+#11 22.92 Downloading typing_extensions-4.14.1-py3-none-any.whl (43 kB)
+#11 22.98 Downloading yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (355 kB)
+#11 23.05 Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl (15 kB)
+#11 23.12 Downloading aiosignal-1.4.0-py3-none-any.whl (7.5 kB)
+#11 23.18 Downloading alembic-1.16.4-py3-none-any.whl (247 kB)
+#11 23.25 Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+#11 23.32 Downloading attrs-25.3.0-py3-none-any.whl (63 kB)
+#11 23.38 Downloading certifi-2025.8.3-py3-none-any.whl (161 kB)
+#11 23.45 Downloading fastapi-0.116.1-py3-none-any.whl (95 kB)
+#11 23.51 Downloading starlette-0.47.2-py3-none-any.whl (72 kB)
+#11 23.58 Downloading anyio-4.10.0-py3-none-any.whl (107 kB)
+#11 23.64 Downloading frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (241 kB)
+#11 23.71 Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+#11 23.78 Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+#11 23.84 Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+#11 23.91 Downloading idna-3.10-py3-none-any.whl (70 kB)
+#11 23.97 Downloading propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (224 kB)
+#11 24.04 Downloading psycopg-3.2.9-py3-none-any.whl (202 kB)
+#11 24.11 Downloading psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (4.4 MB)
+#11 24.28    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.4/4.4 MB 24.5 MB/s  0:00:00
+#11 24.35 Downloading pydantic_settings-2.10.1-py3-none-any.whl (45 kB)
+#11 24.41 Downloading python_dotenv-1.1.1-py3-none-any.whl (20 kB)
+#11 24.48 Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+#11 24.54 Downloading sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+#11 24.64    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 33.5 MB/s  0:00:00
+#11 24.71 Downloading greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (607 kB)
+#11 24.73    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 607.6/607.6 kB 30.4 MB/s  0:00:00
+#11 24.79 Downloading structlog-25.4.0-py3-none-any.whl (68 kB)
+#11 24.86 Downloading tenacity-9.1.2-py3-none-any.whl (28 kB)
+#11 24.92 Downloading typing_inspection-0.4.1-py3-none-any.whl (14 kB)
+#11 24.99 Downloading uvicorn-0.35.0-py3-none-any.whl (66 kB)
+#11 25.06 Downloading click-8.2.1-py3-none-any.whl (102 kB)
+#11 25.12 Downloading httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (510 kB)
+#11 25.21 Downloading PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (767 kB)
+#11 25.23    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 767.5/767.5 kB 29.2 MB/s  0:00:00
+#11 25.30 Downloading uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (4.7 MB)
+#11 25.47    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.7/4.7 MB 27.9 MB/s  0:00:00
+#11 25.53 Downloading watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (452 kB)
+#11 25.61 Downloading websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (182 kB)
+#11 25.68 Downloading mako-1.3.10-py3-none-any.whl (78 kB)
+#11 25.75 Downloading MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (23 kB)
+#11 25.78 Saved /wheels/aiogram-3.21.0-py3-none-any.whl
+#11 25.78 Saved /wheels/aiofiles-24.1.0-py3-none-any.whl
+#11 25.78 Saved /wheels/aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.78 Saved /wheels/magic_filter-1.0.12-py3-none-any.whl
+#11 25.78 Saved /wheels/multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
+#11 25.78 Saved /wheels/pydantic-2.11.7-py3-none-any.whl
+#11 25.78 Saved /wheels/pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.78 Saved /wheels/typing_extensions-4.14.1-py3-none-any.whl
+#11 25.78 Saved /wheels/yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.78 Saved /wheels/aiohappyeyeballs-2.6.1-py3-none-any.whl
+#11 25.78 Saved /wheels/aiosignal-1.4.0-py3-none-any.whl
+#11 25.78 Saved /wheels/alembic-1.16.4-py3-none-any.whl
+#11 25.78 Saved /wheels/annotated_types-0.7.0-py3-none-any.whl
+#11 25.78 Saved /wheels/attrs-25.3.0-py3-none-any.whl
+#11 25.78 Saved /wheels/certifi-2025.8.3-py3-none-any.whl
+#11 25.78 Saved /wheels/fastapi-0.116.1-py3-none-any.whl
+#11 25.78 Saved /wheels/starlette-0.47.2-py3-none-any.whl
+#11 25.78 Saved /wheels/anyio-4.10.0-py3-none-any.whl
+#11 25.78 Saved /wheels/frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.78 Saved /wheels/httpx-0.28.1-py3-none-any.whl
+#11 25.78 Saved /wheels/httpcore-1.0.9-py3-none-any.whl
+#11 25.78 Saved /wheels/h11-0.16.0-py3-none-any.whl
+#11 25.78 Saved /wheels/idna-3.10-py3-none-any.whl
+#11 25.78 Saved /wheels/propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.78 Saved /wheels/psycopg-3.2.9-py3-none-any.whl
+#11 25.79 Saved /wheels/psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.79 Saved /wheels/pydantic_settings-2.10.1-py3-none-any.whl
+#11 25.79 Saved /wheels/python_dotenv-1.1.1-py3-none-any.whl
+#11 25.79 Saved /wheels/sniffio-1.3.1-py3-none-any.whl
+#11 25.79 Saved /wheels/sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.79 Saved /wheels/greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+#11 25.79 Saved /wheels/structlog-25.4.0-py3-none-any.whl
+#11 25.79 Saved /wheels/tenacity-9.1.2-py3-none-any.whl
+#11 25.79 Saved /wheels/typing_inspection-0.4.1-py3-none-any.whl
+#11 25.79 Saved /wheels/uvicorn-0.35.0-py3-none-any.whl
+#11 25.79 Saved /wheels/click-8.2.1-py3-none-any.whl
+#11 25.79 Saved /wheels/httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.79 Saved /wheels/PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.79 Saved /wheels/uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.79 Saved /wheels/watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.79 Saved /wheels/websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.79 Saved /wheels/mako-1.3.10-py3-none-any.whl
+#11 25.79 Saved /wheels/MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.79 Building wheels for collected packages: tg_bot_service, http_service, ai_service
+#11 25.79   Building wheel for tg_bot_service (pyproject.toml): started
+#11 26.21   Building wheel for tg_bot_service (pyproject.toml): finished with status 'done'
+#11 26.21   Created wheel for tg_bot_service: filename=tg_bot_service-0.1.0-py3-none-any.whl size=5414 sha256=aca94146fa025d8fb66aeaad57912f57a2f76cad0c4974d10acfd3943270d43f
+#11 26.21   Stored in directory: /tmp/pip-ephem-wheel-cache-jhm6ztwd/wheels/2c/d3/10/b9d88edc85721a7ca40d90d1af0ce341bd0e3aa1c43c5efecc
+#11 26.21   Building wheel for http_service (pyproject.toml): started
+#11 26.65   Building wheel for http_service (pyproject.toml): finished with status 'done'
+#11 26.65   Created wheel for http_service: filename=http_service-0.2.0-py3-none-any.whl size=11373 sha256=ce2d9f5929e4ce7e1d42386be435423252f8a24783b8219e94199c8be8973869
+#11 26.65   Stored in directory: /tmp/pip-ephem-wheel-cache-jhm6ztwd/wheels/d9/54/a6/db0b000b08e9a9e6315c20f6da687cf6ec5a47fe05624c67b8
+#11 26.65   Building wheel for ai_service (pyproject.toml): started
+#11 27.09   Building wheel for ai_service (pyproject.toml): finished with status 'done'
+#11 27.09   Created wheel for ai_service: filename=ai_service-0.1.0-py3-none-any.whl size=4085 sha256=4935b1f8ec078bee837e0a9328d973a3fcd13f17b49f82f6b5e8ea19c11a32c0
+#11 27.09   Stored in directory: /tmp/pip-ephem-wheel-cache-jhm6ztwd/wheels/f3/b1/e1/ee5a0ab2dff8de4f669561f007c12531507078b9ab242eac96
+#11 27.09 Successfully built tg_bot_service http_service ai_service
+#11 DONE 27.5s
+
+#12 [tg_bot runtime 3/5] RUN useradd -m appuser
+#12 CACHED
+
+#13 [tg_bot runtime 4/5] COPY --from=builder /wheels /wheels
+#13 DONE 0.1s
+
+#14 [tg_bot runtime 5/5] RUN python -m pip install --no-cache-dir /wheels/*
+#14 0.754 Defaulting to user installation because normal site-packages is not writeable
+#14 0.852 Processing /wheels/MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.855 Processing /wheels/PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.856 Processing /wheels/ai_service-0.1.0-py3-none-any.whl
+#14 0.857 Processing /wheels/aiofiles-24.1.0-py3-none-any.whl
+#14 0.857 Processing /wheels/aiogram-3.21.0-py3-none-any.whl
+#14 0.863 Processing /wheels/aiohappyeyeballs-2.6.1-py3-none-any.whl
+#14 0.864 Processing /wheels/aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.866 Processing /wheels/aiosignal-1.4.0-py3-none-any.whl
+#14 0.867 Processing /wheels/alembic-1.16.4-py3-none-any.whl
+#14 0.868 Processing /wheels/annotated_types-0.7.0-py3-none-any.whl
+#14 0.869 Processing /wheels/anyio-4.10.0-py3-none-any.whl
+#14 0.870 Processing /wheels/attrs-25.3.0-py3-none-any.whl
+#14 0.874 Processing /wheels/certifi-2025.8.3-py3-none-any.whl
+#14 0.874 Processing /wheels/click-8.2.1-py3-none-any.whl
+#14 0.875 Processing /wheels/fastapi-0.116.1-py3-none-any.whl
+#14 0.878 Processing /wheels/frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.879 Processing /wheels/greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+#14 0.881 Processing /wheels/h11-0.16.0-py3-none-any.whl
+#14 0.881 Processing /wheels/http_service-0.2.0-py3-none-any.whl
+#14 0.882 Processing /wheels/httpcore-1.0.9-py3-none-any.whl
+#14 0.884 Processing /wheels/httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.885 Processing /wheels/httpx-0.28.1-py3-none-any.whl
+#14 0.886 Processing /wheels/idna-3.10-py3-none-any.whl
+#14 0.887 Processing /wheels/magic_filter-1.0.12-py3-none-any.whl
+#14 0.888 Processing /wheels/mako-1.3.10-py3-none-any.whl
+#14 0.889 Processing /wheels/multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
+#14 0.890 Processing /wheels/propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.891 Processing /wheels/psycopg-3.2.9-py3-none-any.whl
+#14 0.894 Processing /wheels/psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.897 Processing /wheels/pydantic-2.11.7-py3-none-any.whl
+#14 0.899 Processing /wheels/pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.902 Processing /wheels/pydantic_settings-2.10.1-py3-none-any.whl
+#14 0.903 Processing /wheels/python_dotenv-1.1.1-py3-none-any.whl
+#14 0.904 Processing /wheels/sniffio-1.3.1-py3-none-any.whl
+#14 0.905 Processing /wheels/sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.911 Processing /wheels/starlette-0.47.2-py3-none-any.whl
+#14 0.913 Processing /wheels/structlog-25.4.0-py3-none-any.whl
+#14 0.913 Processing /wheels/tenacity-9.1.2-py3-none-any.whl
+#14 0.914 Processing /wheels/tg_bot_service-0.1.0-py3-none-any.whl
+#14 0.915 Processing /wheels/typing_extensions-4.14.1-py3-none-any.whl
+#14 0.916 Processing /wheels/typing_inspection-0.4.1-py3-none-any.whl
+#14 0.916 Processing /wheels/uvicorn-0.35.0-py3-none-any.whl
+#14 0.918 Processing /wheels/uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.922 Processing /wheels/watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.923 Processing /wheels/websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.924 Processing /wheels/yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.995 Installing collected packages: websockets, uvloop, typing-extensions, tenacity, structlog, sniffio, PyYAML, python-dotenv, psycopg-binary, propcache, multidict, MarkupSafe, magic-filter, idna, httptools, h11, greenlet, frozenlist, click, certifi, attrs, annotated-types, aiohappyeyeballs, aiofiles, yarl, uvicorn, typing-inspection, sqlalchemy, pydantic-core, psycopg, mako, httpcore, anyio, aiosignal, watchfiles, starlette, pydantic, httpx, alembic, aiohttp, pydantic-settings, fastapi, aiogram, tg-bot-service, http-service, ai-service
+#14 1.055   WARNING: The script websockets is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 1.055   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 1.286   WARNING: The script dotenv is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 1.286   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 1.803   WARNING: The script uvicorn is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 1.803   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 2.577   WARNING: The script mako-render is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 2.577   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 2.722   WARNING: The script watchfiles is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 2.722   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 2.964   WARNING: The script httpx is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 2.964   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 3.056   WARNING: The script alembic is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 3.056   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 3.249   WARNING: The script fastapi is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 3.249   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 3.533 Successfully installed MarkupSafe-3.0.2 PyYAML-6.0.2 ai-service-0.1.0 aiofiles-24.1.0 aiogram-3.21.0 aiohappyeyeballs-2.6.1 aiohttp-3.12.15 aiosignal-1.4.0 alembic-1.16.4 annotated-types-0.7.0 anyio-4.10.0 attrs-25.3.0 certifi-2025.8.3 click-8.2.1 fastapi-0.116.1 frozenlist-1.7.0 greenlet-3.2.4 h11-0.16.0 http-service-0.2.0 httpcore-1.0.9 httptools-0.6.4 httpx-0.28.1 idna-3.10 magic-filter-1.0.12 mako-1.3.10 multidict-6.6.4 propcache-0.3.2 psycopg-3.2.9 psycopg-binary-3.2.9 pydantic-2.11.7 pydantic-core-2.33.2 pydantic-settings-2.10.1 python-dotenv-1.1.1 sniffio-1.3.1 sqlalchemy-2.0.43 starlette-0.47.2 structlog-25.4.0 tenacity-9.1.2 tg-bot-service-0.1.0 typing-extensions-4.14.1 typing-inspection-0.4.1 uvicorn-0.35.0 uvloop-0.21.0 watchfiles-1.1.0 websockets-15.0.1 yarl-1.20.1
+#14 4.151 
+#14 4.151 [notice] A new release of pip is available: 25.0.1 -> 25.2
+#14 4.151 [notice] To update, run: pip install --upgrade pip
+#14 DONE 4.2s
+
+#15 [tg_bot] exporting to image
+#15 exporting layers
+#15 exporting layers 0.2s done
+#15 writing image sha256:b4ce83ec312115ba03f453797b53e7fa5396edd26c322ddf2e77536488ef9ade done
+#15 naming to docker.io/library/http-tg_bot done
+#15 DONE 0.3s
+
+#16 [tg_bot] resolving provenance for metadata file
+#16 DONE 0.0s
+
+--- logs tg_bot (last 60)
+
+--- bring up monitoring stack
+
+--- check ports
+tcp   LISTEN 0      4096         0.0.0.0:3100       0.0.0.0:*                                                
+tcp   LISTEN 0      4096         0.0.0.0:3000       0.0.0.0:*                                                
+
+--- grafana health (expect 302/200)
+
+--- loki labels
+{"status":"success","data":["filename","job"]}
+
+--- restart promtail & grafana
+
+--- grafana check
+HTTP/1.1 302 Found
+Cache-Control: no-store
+Content-Type: text/html; charset=utf-8
+
+--- loki sample query labels
+{"status":"success","data":["filename","job"]}
+
+--- restart grafana
+
+--- wait
+
+--- check dashboards dir inside grafana
+total 20
+drwxrwxr-x    2 1000     1000          4096 Aug 14 21:38 .
+drwxrwxr-x    4 1000     1000          4096 Aug 14 21:38 ..
+-rw-rw-r--    1 1000     1000          5571 Aug 14 21:50 cursor.json
+-rw-rw-r--    1 1000     1000           196 Aug 14 21:38 dashboards.yml
+
+--- try load dashboard via search API
+Monorepo Logs Overview
+bev0mh4gm1zi8b
+
+--- restart grafana
+
+--- wait
+
+--- list dashboards dir inside grafana
+total 20
+drwxrwxr-x    2 1000     1000          4096 Aug 14 21:38 .
+drwxrwxr-x    4 1000     1000          4096 Aug 14 21:38 ..
+-rw-rw-r--    1 1000     1000          5571 Aug 14 21:50 cursor.json
+-rw-rw-r--    1 1000     1000           196 Aug 14 21:38 dashboards.yml
+
+--- show dashboard search api result
+[{"id":1,"uid":"bev0mh4gm1zi8b","title":"Monorepo Logs Overview","uri":"db/monorepo-logs-overview","url":"/d/bev0mh4gm1zi8b/monorepo-logs-overview","slug":"","type":"dash-db","tags":[],"isStarred":false,"sortMeta":0}]
+--- ai_service /health
+{"ok":true,"models":["mistral:latest"]}
+
+--- ollama tags
+{"models":[{"name":"mistral:latest","model":"mistral:latest","modified_at":"2025-08-14T20:59:01.43245701Z","size":4372824384,"digest":"6577803aa9a036369e481d648a2baebb381ebc6e897f2bb9a766a2aa7bfbc1cf","details":{"parent_model":"","format":"gguf","family":"llama","families":["llama"],"parameter_size":"7.2B","quantization_level":"Q4_K_M"}}]}
+
+--- docker logs tg_bot_service (last 200)
+
+
+--- docker logs ai_service_app (last 200)
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_transports/default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/connection.py", line 103, in handle_async_request
+    return await self._connection.handle_async_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/http11.py", line 136, in handle_async_request
+    raise exc
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/http11.py", line 106, in handle_async_request
+    ) = await self._receive_response_headers(**kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/http11.py", line 177, in _receive_response_headers
+    event = await self._receive_event(timeout=timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/http11.py", line 217, in _receive_event
+    data = await self._network_stream.read(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_backends/anyio.py", line 32, in read
+    with map_exceptions(exc_map):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ReadTimeout
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/appuser/.local/lib/python3.12/site-packages/ai_service/main.py", line 56, in _generate_with_ollama
+    resp = await client.post(url, json=payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_client.py", line 1859, in post
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_client.py", line 1540, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_transports/default.py", line 393, in handle_async_request
+    with map_httpcore_exceptions():
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ReadTimeout
+ollama request failed: 
+Traceback (most recent call last):
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_transports/default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/connection.py", line 103, in handle_async_request
+    return await self._connection.handle_async_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/http11.py", line 136, in handle_async_request
+    raise exc
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/http11.py", line 106, in handle_async_request
+    ) = await self._receive_response_headers(**kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/http11.py", line 177, in _receive_response_headers
+    event = await self._receive_event(timeout=timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/http11.py", line 217, in _receive_event
+    data = await self._network_stream.read(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_backends/anyio.py", line 32, in read
+    with map_exceptions(exc_map):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ReadTimeout
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/appuser/.local/lib/python3.12/site-packages/ai_service/main.py", line 56, in _generate_with_ollama
+    resp = await client.post(url, json=payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_client.py", line 1859, in post
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_client.py", line 1540, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_transports/default.py", line 393, in handle_async_request
+    with map_httpcore_exceptions():
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ReadTimeout
+ollama request failed: 
+Traceback (most recent call last):
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_transports/default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/connection.py", line 103, in handle_async_request
+    return await self._connection.handle_async_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/http11.py", line 136, in handle_async_request
+    raise exc
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/http11.py", line 106, in handle_async_request
+    ) = await self._receive_response_headers(**kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/http11.py", line 177, in _receive_response_headers
+    event = await self._receive_event(timeout=timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_async/http11.py", line 217, in _receive_event
+    data = await self._network_stream.read(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_backends/anyio.py", line 32, in read
+    with map_exceptions(exc_map):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ReadTimeout
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/appuser/.local/lib/python3.12/site-packages/ai_service/main.py", line 56, in _generate_with_ollama
+    resp = await client.post(url, json=payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_client.py", line 1859, in post
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_client.py", line 1540, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_transports/default.py", line 393, in handle_async_request
+    with map_httpcore_exceptions():
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/appuser/.local/lib/python3.12/site-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ReadTimeout
+INFO:     172.28.0.1:49890 - "GET /health HTTP/1.1" 200 OK
+
+--- rebuild services and restart tg_bot & ai_service
+#0 building with "default" instance using docker driver
+
+#1 [ai_service internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.06kB done
+#1 DONE 0.0s
+
+#2 [tg_bot internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.06kB done
+#2 DONE 0.0s
+
+#3 [tg_bot] resolve image config for docker-image://docker.io/docker/dockerfile:1
+#3 DONE 1.7s
+
+#4 [tg_bot] docker-image://docker.io/docker/dockerfile:1@sha256:38387523653efa0039f8e1c89bb74a30504e76ee9f565e25c9a09841f9427b05
+#4 CACHED
+
+#5 [ai_service internal] load metadata for docker.io/library/python:3.12-slim
+#5 DONE 0.0s
+
+#6 [tg_bot internal] load .dockerignore
+#6 transferring context:
+#6 transferring context: 161B done
+#6 DONE 0.0s
+
+#7 [ai_service internal] load .dockerignore
+#7 transferring context: 161B done
+#7 DONE 0.0s
+
+#8 [ai_service builder 1/5] FROM docker.io/library/python:3.12-slim
+#8 DONE 0.0s
+
+#9 [tg_bot internal] load build context
+#9 transferring context: 13.98kB done
+#9 DONE 0.0s
+
+#10 [ai_service builder 2/5] WORKDIR /app
+#10 CACHED
+
+#11 [ai_service internal] load build context
+#11 transferring context: 98.17kB done
+#11 DONE 0.0s
+
+#12 [tg_bot builder 3/5] RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
+#12 CACHED
+
+#13 [tg_bot builder 4/5] COPY services ./services
+#13 DONE 0.1s
+
+#14 [ai_service builder 5/5] RUN python -m pip install --upgrade pip &&     python -m pip wheel --wheel-dir /wheels services/tg_bot services/http_service services/ai_service
+#14 0.808 Requirement already satisfied: pip in /usr/local/lib/python3.12/site-packages (25.0.1)
+#14 1.405 Collecting pip
+#14 1.870   Downloading pip-25.2-py3-none-any.whl.metadata (4.7 kB)
+#14 1.935 Downloading pip-25.2-py3-none-any.whl (1.8 MB)
+#14 2.331    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 9.1 MB/s eta 0:00:00
+#14 2.338 Installing collected packages: pip
+#14 2.338   Attempting uninstall: pip
+#14 2.339     Found existing installation: pip 25.0.1
+#14 2.353     Uninstalling pip-25.0.1:
+#14 2.681       Successfully uninstalled pip-25.0.1
+#14 3.119 Successfully installed pip-25.2
+#14 3.119 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#14 3.570 Processing ./services/tg_bot
+#14 3.572   Installing build dependencies: started
+#14 5.764   Installing build dependencies: finished with status 'done'
+#14 5.764   Getting requirements to build wheel: started
+#14 6.234   Getting requirements to build wheel: finished with status 'done'
+#14 6.235   Preparing metadata (pyproject.toml): started
+#14 6.654   Preparing metadata (pyproject.toml): finished with status 'done'
+#14 6.655 Processing ./services/http_service
+#14 6.656   Installing build dependencies: started
+#14 8.909   Installing build dependencies: finished with status 'done'
+#14 8.909   Getting requirements to build wheel: started
+#14 9.375   Getting requirements to build wheel: finished with status 'done'
+#14 9.376   Preparing metadata (pyproject.toml): started
+#14 9.814   Preparing metadata (pyproject.toml): finished with status 'done'
+#14 9.815 Processing ./services/ai_service
+#14 9.816   Installing build dependencies: started
+#14 12.04   Installing build dependencies: finished with status 'done'
+#14 12.04   Getting requirements to build wheel: started
+#14 12.48   Getting requirements to build wheel: finished with status 'done'
+#14 12.48   Preparing metadata (pyproject.toml): started
+#14 12.91   Preparing metadata (pyproject.toml): finished with status 'done'
+#14 13.48 Collecting aiogram>=3.12 (from tg_bot_service==0.1.0)
+#14 13.98   Downloading aiogram-3.21.0-py3-none-any.whl.metadata (7.6 kB)
+#14 14.07 Collecting httpx>=0.27 (from tg_bot_service==0.1.0)
+#14 14.14   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+#14 14.28 Collecting fastapi>=0.110 (from http_service==0.2.0)
+#14 14.34   Downloading fastapi-0.116.1-py3-none-any.whl.metadata (28 kB)
+#14 14.48 Collecting uvicorn>=0.27 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#14 14.54   Downloading uvicorn-0.35.0-py3-none-any.whl.metadata (6.5 kB)
+#14 14.63 Collecting tenacity>=8.2 (from http_service==0.2.0)
+#14 14.70   Downloading tenacity-9.1.2-py3-none-any.whl.metadata (1.2 kB)
+#14 14.95 Collecting pydantic>=2.6 (from http_service==0.2.0)
+#14 15.01   Downloading pydantic-2.11.7-py3-none-any.whl.metadata (67 kB)
+#14 15.17 Collecting pydantic-settings>=2.2 (from http_service==0.2.0)
+#14 15.24   Downloading pydantic_settings-2.10.1-py3-none-any.whl.metadata (3.4 kB)
+#14 15.31 Collecting structlog>=24.1 (from http_service==0.2.0)
+#14 15.38   Downloading structlog-25.4.0-py3-none-any.whl.metadata (7.6 kB)
+#14 15.66 Collecting sqlalchemy>=2.0 (from http_service==0.2.0)
+#14 15.73   Downloading sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (9.6 kB)
+#14 15.81 Collecting psycopg>=3.2 (from psycopg[binary]>=3.2->http_service==0.2.0)
+#14 15.88   Downloading psycopg-3.2.9-py3-none-any.whl.metadata (4.5 kB)
+#14 15.96 Collecting alembic>=1.13 (from http_service==0.2.0)
+#14 16.02   Downloading alembic-1.16.4-py3-none-any.whl.metadata (7.3 kB)
+#14 16.10 Collecting aiofiles<24.2,>=23.2.1 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#14 16.16   Downloading aiofiles-24.1.0-py3-none-any.whl.metadata (10 kB)
+#14 16.55 Collecting aiohttp<3.13,>=3.9.0 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#14 16.62   Downloading aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.7 kB)
+#14 16.72 Collecting certifi>=2023.7.22 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#14 16.79   Downloading certifi-2025.8.3-py3-none-any.whl.metadata (2.4 kB)
+#14 16.86 Collecting magic-filter<1.1,>=1.0.12 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#14 16.92   Downloading magic_filter-1.0.12-py3-none-any.whl.metadata (1.5 kB)
+#14 17.00 Collecting typing-extensions<=5.0,>=4.7.0 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#14 17.07   Downloading typing_extensions-4.14.1-py3-none-any.whl.metadata (3.0 kB)
+#14 17.15 Collecting aiohappyeyeballs>=2.5.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#14 17.21   Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl.metadata (5.9 kB)
+#14 17.28 Collecting aiosignal>=1.4.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#14 17.35   Downloading aiosignal-1.4.0-py3-none-any.whl.metadata (3.7 kB)
+#14 17.42 Collecting attrs>=17.3.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#14 17.48   Downloading attrs-25.3.0-py3-none-any.whl.metadata (10 kB)
+#14 17.59 Collecting frozenlist>=1.1.1 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#14 17.65   Downloading frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (18 kB)
+#14 17.83 Collecting multidict<7.0,>=4.5 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#14 17.90   Downloading multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.3 kB)
+#14 17.99 Collecting propcache>=0.2.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#14 18.05   Downloading propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (12 kB)
+#14 18.26 Collecting yarl<2.0,>=1.17.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#14 18.32   Downloading yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (73 kB)
+#14 18.43 Collecting annotated-types>=0.6.0 (from pydantic>=2.6->http_service==0.2.0)
+#14 18.49   Downloading annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+#14 18.88 Collecting pydantic-core==2.33.2 (from pydantic>=2.6->http_service==0.2.0)
+#14 18.94   Downloading pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)
+#14 19.02 Collecting typing-inspection>=0.4.0 (from pydantic>=2.6->http_service==0.2.0)
+#14 19.08   Downloading typing_inspection-0.4.1-py3-none-any.whl.metadata (2.6 kB)
+#14 19.16 Collecting idna>=2.0 (from yarl<2.0,>=1.17.0->aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#14 19.22   Downloading idna-3.10-py3-none-any.whl.metadata (10 kB)
+#14 19.31 Collecting Mako (from alembic>=1.13->http_service==0.2.0)
+#14 19.38   Downloading mako-1.3.10-py3-none-any.whl.metadata (2.9 kB)
+#14 19.47 Collecting starlette<0.48.0,>=0.40.0 (from fastapi>=0.110->http_service==0.2.0)
+#14 19.53   Downloading starlette-0.47.2-py3-none-any.whl.metadata (6.2 kB)
+#14 19.63 Collecting anyio<5,>=3.6.2 (from starlette<0.48.0,>=0.40.0->fastapi>=0.110->http_service==0.2.0)
+#14 19.69   Downloading anyio-4.10.0-py3-none-any.whl.metadata (4.0 kB)
+#14 19.77 Collecting sniffio>=1.1 (from anyio<5,>=3.6.2->starlette<0.48.0,>=0.40.0->fastapi>=0.110->http_service==0.2.0)
+#14 19.83   Downloading sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+#14 19.91 Collecting httpcore==1.* (from httpx>=0.27->tg_bot_service==0.1.0)
+#14 19.97   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+#14 20.05 Collecting h11>=0.16 (from httpcore==1.*->httpx>=0.27->tg_bot_service==0.1.0)
+#14 20.12   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+#14 20.26 Collecting psycopg-binary==3.2.9 (from psycopg[binary]>=3.2->http_service==0.2.0)
+#14 20.32   Downloading psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (2.9 kB)
+#14 20.42 Collecting python-dotenv>=0.21.0 (from pydantic-settings>=2.2->http_service==0.2.0)
+#14 20.48   Downloading python_dotenv-1.1.1-py3-none-any.whl.metadata (24 kB)
+#14 20.62 Collecting greenlet>=1 (from sqlalchemy>=2.0->http_service==0.2.0)
+#14 20.68   Downloading greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (4.1 kB)
+#14 20.76 Collecting click>=7.0 (from uvicorn>=0.27->uvicorn[standard]>=0.27->http_service==0.2.0)
+#14 20.82   Downloading click-8.2.1-py3-none-any.whl.metadata (2.5 kB)
+#14 20.90 Collecting httptools>=0.6.3 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#14 20.97   Downloading httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (3.6 kB)
+#14 21.05 Collecting pyyaml>=5.1 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#14 21.11   Downloading PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (2.1 kB)
+#14 21.20 Collecting uvloop>=0.15.1 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#14 21.27   Downloading uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+#14 21.38 Collecting watchfiles>=0.13 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#14 21.44   Downloading watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+#14 21.58 Collecting websockets>=10.4 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#14 21.65   Downloading websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)
+#14 21.74 Collecting MarkupSafe>=0.9.2 (from Mako->alembic>=1.13->http_service==0.2.0)
+#14 21.81   Downloading MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.0 kB)
+#14 21.88 Downloading aiogram-3.21.0-py3-none-any.whl (677 kB)
+#14 22.06    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 677.3/677.3 kB 6.0 MB/s  0:00:00
+#14 22.12 Downloading aiofiles-24.1.0-py3-none-any.whl (15 kB)
+#14 22.19 Downloading aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.7 MB)
+#14 22.31    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 14.7 MB/s  0:00:00
+#14 22.37 Downloading magic_filter-1.0.12-py3-none-any.whl (11 kB)
+#14 22.44 Downloading multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (256 kB)
+#14 22.51 Downloading pydantic-2.11.7-py3-none-any.whl (444 kB)
+#14 22.58 Downloading pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.0 MB)
+#14 22.66    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 26.9 MB/s  0:00:00
+#14 22.72 Downloading typing_extensions-4.14.1-py3-none-any.whl (43 kB)
+#14 22.79 Downloading yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (355 kB)
+#14 22.85 Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl (15 kB)
+#14 22.92 Downloading aiosignal-1.4.0-py3-none-any.whl (7.5 kB)
+#14 22.98 Downloading alembic-1.16.4-py3-none-any.whl (247 kB)
+#14 23.05 Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+#14 23.11 Downloading attrs-25.3.0-py3-none-any.whl (63 kB)
+#14 23.18 Downloading certifi-2025.8.3-py3-none-any.whl (161 kB)
+#14 23.25 Downloading fastapi-0.116.1-py3-none-any.whl (95 kB)
+#14 23.31 Downloading starlette-0.47.2-py3-none-any.whl (72 kB)
+#14 23.38 Downloading anyio-4.10.0-py3-none-any.whl (107 kB)
+#14 23.44 Downloading frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (241 kB)
+#14 23.51 Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+#14 23.57 Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+#14 23.64 Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+#14 23.70 Downloading idna-3.10-py3-none-any.whl (70 kB)
+#14 23.77 Downloading propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (224 kB)
+#14 23.84 Downloading psycopg-3.2.9-py3-none-any.whl (202 kB)
+#14 23.91 Downloading psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (4.4 MB)
+#14 24.08    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.4/4.4 MB 25.1 MB/s  0:00:00
+#14 24.14 Downloading pydantic_settings-2.10.1-py3-none-any.whl (45 kB)
+#14 24.21 Downloading python_dotenv-1.1.1-py3-none-any.whl (20 kB)
+#14 24.27 Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+#14 24.33 Downloading sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+#14 24.44    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 31.5 MB/s  0:00:00
+#14 24.50 Downloading greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (607 kB)
+#14 24.53    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 607.6/607.6 kB 29.8 MB/s  0:00:00
+#14 24.59 Downloading structlog-25.4.0-py3-none-any.whl (68 kB)
+#14 24.66 Downloading tenacity-9.1.2-py3-none-any.whl (28 kB)
+#14 24.72 Downloading typing_inspection-0.4.1-py3-none-any.whl (14 kB)
+#14 24.78 Downloading uvicorn-0.35.0-py3-none-any.whl (66 kB)
+#14 24.85 Downloading click-8.2.1-py3-none-any.whl (102 kB)
+#14 24.92 Downloading httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (510 kB)
+#14 25.00 Downloading PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (767 kB)
+#14 25.02    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 767.5/767.5 kB 29.1 MB/s  0:00:00
+#14 25.09 Downloading uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (4.7 MB)
+#14 25.26    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.7/4.7 MB 28.2 MB/s  0:00:00
+#14 25.32 Downloading watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (452 kB)
+#14 25.40 Downloading websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (182 kB)
+#14 25.47 Downloading mako-1.3.10-py3-none-any.whl (78 kB)
+#14 25.54 Downloading MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (23 kB)
+#14 25.57 Saved /wheels/aiogram-3.21.0-py3-none-any.whl
+#14 25.57 Saved /wheels/aiofiles-24.1.0-py3-none-any.whl
+#14 25.57 Saved /wheels/aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.57 Saved /wheels/magic_filter-1.0.12-py3-none-any.whl
+#14 25.57 Saved /wheels/multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
+#14 25.57 Saved /wheels/pydantic-2.11.7-py3-none-any.whl
+#14 25.57 Saved /wheels/pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.57 Saved /wheels/typing_extensions-4.14.1-py3-none-any.whl
+#14 25.57 Saved /wheels/yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.57 Saved /wheels/aiohappyeyeballs-2.6.1-py3-none-any.whl
+#14 25.57 Saved /wheels/aiosignal-1.4.0-py3-none-any.whl
+#14 25.57 Saved /wheels/alembic-1.16.4-py3-none-any.whl
+#14 25.57 Saved /wheels/annotated_types-0.7.0-py3-none-any.whl
+#14 25.57 Saved /wheels/attrs-25.3.0-py3-none-any.whl
+#14 25.57 Saved /wheels/certifi-2025.8.3-py3-none-any.whl
+#14 25.57 Saved /wheels/fastapi-0.116.1-py3-none-any.whl
+#14 25.57 Saved /wheels/starlette-0.47.2-py3-none-any.whl
+#14 25.57 Saved /wheels/anyio-4.10.0-py3-none-any.whl
+#14 25.57 Saved /wheels/frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.57 Saved /wheels/httpx-0.28.1-py3-none-any.whl
+#14 25.57 Saved /wheels/httpcore-1.0.9-py3-none-any.whl
+#14 25.57 Saved /wheels/h11-0.16.0-py3-none-any.whl
+#14 25.57 Saved /wheels/idna-3.10-py3-none-any.whl
+#14 25.57 Saved /wheels/propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.57 Saved /wheels/psycopg-3.2.9-py3-none-any.whl
+#14 25.57 Saved /wheels/psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.57 Saved /wheels/pydantic_settings-2.10.1-py3-none-any.whl
+#14 25.57 Saved /wheels/python_dotenv-1.1.1-py3-none-any.whl
+#14 25.57 Saved /wheels/sniffio-1.3.1-py3-none-any.whl
+#14 25.57 Saved /wheels/sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.57 Saved /wheels/greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+#14 25.57 Saved /wheels/structlog-25.4.0-py3-none-any.whl
+#14 25.57 Saved /wheels/tenacity-9.1.2-py3-none-any.whl
+#14 25.57 Saved /wheels/typing_inspection-0.4.1-py3-none-any.whl
+#14 25.57 Saved /wheels/uvicorn-0.35.0-py3-none-any.whl
+#14 25.57 Saved /wheels/click-8.2.1-py3-none-any.whl
+#14 25.57 Saved /wheels/httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.57 Saved /wheels/PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.57 Saved /wheels/uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.57 Saved /wheels/watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.58 Saved /wheels/websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.58 Saved /wheels/mako-1.3.10-py3-none-any.whl
+#14 25.58 Saved /wheels/MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.58 Building wheels for collected packages: tg_bot_service, http_service, ai_service
+#14 25.58   Building wheel for tg_bot_service (pyproject.toml): started
+#14 25.99   Building wheel for tg_bot_service (pyproject.toml): finished with status 'done'
+#14 25.99   Created wheel for tg_bot_service: filename=tg_bot_service-0.1.0-py3-none-any.whl size=5475 sha256=b7327ceb4a2b9dea07041fc4f6bb27fdd991508baa239b7213a7f8ee8425cf49
+#14 25.99   Stored in directory: /tmp/pip-ephem-wheel-cache-q51wffa1/wheels/2c/d3/10/b9d88edc85721a7ca40d90d1af0ce341bd0e3aa1c43c5efecc
+#14 25.99   Building wheel for http_service (pyproject.toml): started
+#14 26.41   Building wheel for http_service (pyproject.toml): finished with status 'done'
+#14 26.41   Created wheel for http_service: filename=http_service-0.2.0-py3-none-any.whl size=11373 sha256=ed452dbb2fac9bb8ca96006203215edca26d464b15ee5f5340c8ffe92c6f263f
+#14 26.41   Stored in directory: /tmp/pip-ephem-wheel-cache-q51wffa1/wheels/d9/54/a6/db0b000b08e9a9e6315c20f6da687cf6ec5a47fe05624c67b8
+#14 26.42   Building wheel for ai_service (pyproject.toml): started
+#14 26.84   Building wheel for ai_service (pyproject.toml): finished with status 'done'
+#14 26.84   Created wheel for ai_service: filename=ai_service-0.1.0-py3-none-any.whl size=4087 sha256=cddc2973646aeb104766baacf43e8a783a3f9b763c709fb184880c8162064e5a
+#14 26.84   Stored in directory: /tmp/pip-ephem-wheel-cache-q51wffa1/wheels/f3/b1/e1/ee5a0ab2dff8de4f669561f007c12531507078b9ab242eac96
+#14 26.84 Successfully built tg_bot_service http_service ai_service
+#14 DONE 27.1s
+
+#15 [tg_bot runtime 3/5] RUN useradd -m appuser
+#15 CACHED
+
+#16 [ai_service runtime 4/5] COPY --from=builder /wheels /wheels
+#16 DONE 0.1s
+
+#17 [tg_bot runtime 5/5] RUN python -m pip install --no-cache-dir /wheels/*
+#17 0.732 Defaulting to user installation because normal site-packages is not writeable
+#17 0.822 Processing /wheels/MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.825 Processing /wheels/PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.826 Processing /wheels/ai_service-0.1.0-py3-none-any.whl
+#17 0.826 Processing /wheels/aiofiles-24.1.0-py3-none-any.whl
+#17 0.827 Processing /wheels/aiogram-3.21.0-py3-none-any.whl
+#17 0.832 Processing /wheels/aiohappyeyeballs-2.6.1-py3-none-any.whl
+#17 0.833 Processing /wheels/aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.836 Processing /wheels/aiosignal-1.4.0-py3-none-any.whl
+#17 0.837 Processing /wheels/alembic-1.16.4-py3-none-any.whl
+#17 0.838 Processing /wheels/annotated_types-0.7.0-py3-none-any.whl
+#17 0.839 Processing /wheels/anyio-4.10.0-py3-none-any.whl
+#17 0.840 Processing /wheels/attrs-25.3.0-py3-none-any.whl
+#17 0.843 Processing /wheels/certifi-2025.8.3-py3-none-any.whl
+#17 0.844 Processing /wheels/click-8.2.1-py3-none-any.whl
+#17 0.845 Processing /wheels/fastapi-0.116.1-py3-none-any.whl
+#17 0.848 Processing /wheels/frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.849 Processing /wheels/greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+#17 0.850 Processing /wheels/h11-0.16.0-py3-none-any.whl
+#17 0.851 Processing /wheels/http_service-0.2.0-py3-none-any.whl
+#17 0.852 Processing /wheels/httpcore-1.0.9-py3-none-any.whl
+#17 0.853 Processing /wheels/httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.854 Processing /wheels/httpx-0.28.1-py3-none-any.whl
+#17 0.856 Processing /wheels/idna-3.10-py3-none-any.whl
+#17 0.857 Processing /wheels/magic_filter-1.0.12-py3-none-any.whl
+#17 0.858 Processing /wheels/mako-1.3.10-py3-none-any.whl
+#17 0.859 Processing /wheels/multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
+#17 0.860 Processing /wheels/propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.861 Processing /wheels/psycopg-3.2.9-py3-none-any.whl
+#17 0.863 Processing /wheels/psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.867 Processing /wheels/pydantic-2.11.7-py3-none-any.whl
+#17 0.869 Processing /wheels/pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.871 Processing /wheels/pydantic_settings-2.10.1-py3-none-any.whl
+#17 0.872 Processing /wheels/python_dotenv-1.1.1-py3-none-any.whl
+#17 0.873 Processing /wheels/sniffio-1.3.1-py3-none-any.whl
+#17 0.874 Processing /wheels/sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.880 Processing /wheels/starlette-0.47.2-py3-none-any.whl
+#17 0.882 Processing /wheels/structlog-25.4.0-py3-none-any.whl
+#17 0.883 Processing /wheels/tenacity-9.1.2-py3-none-any.whl
+#17 0.883 Processing /wheels/tg_bot_service-0.1.0-py3-none-any.whl
+#17 0.884 Processing /wheels/typing_extensions-4.14.1-py3-none-any.whl
+#17 0.885 Processing /wheels/typing_inspection-0.4.1-py3-none-any.whl
+#17 0.885 Processing /wheels/uvicorn-0.35.0-py3-none-any.whl
+#17 0.887 Processing /wheels/uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.891 Processing /wheels/watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.892 Processing /wheels/websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.893 Processing /wheels/yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.962 Installing collected packages: websockets, uvloop, typing-extensions, tenacity, structlog, sniffio, PyYAML, python-dotenv, psycopg-binary, propcache, multidict, MarkupSafe, magic-filter, idna, httptools, h11, greenlet, frozenlist, click, certifi, attrs, annotated-types, aiohappyeyeballs, aiofiles, yarl, uvicorn, typing-inspection, sqlalchemy, pydantic-core, psycopg, mako, httpcore, anyio, aiosignal, watchfiles, starlette, pydantic, httpx, alembic, aiohttp, pydantic-settings, fastapi, aiogram, tg-bot-service, http-service, ai-service
+#17 1.020   WARNING: The script websockets is installed in '/home/appuser/.local/bin' which is not on PATH.
+#17 1.020   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#17 1.247   WARNING: The script dotenv is installed in '/home/appuser/.local/bin' which is not on PATH.
+#17 1.247   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#17 1.747   WARNING: The script uvicorn is installed in '/home/appuser/.local/bin' which is not on PATH.
+#17 1.747   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#17 2.499   WARNING: The script mako-render is installed in '/home/appuser/.local/bin' which is not on PATH.
+#17 2.499   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#17 2.643   WARNING: The script watchfiles is installed in '/home/appuser/.local/bin' which is not on PATH.
+#17 2.643   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#17 2.881   WARNING: The script httpx is installed in '/home/appuser/.local/bin' which is not on PATH.
+#17 2.881   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#17 2.971   WARNING: The script alembic is installed in '/home/appuser/.local/bin' which is not on PATH.
+#17 2.971   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#17 3.159   WARNING: The script fastapi is installed in '/home/appuser/.local/bin' which is not on PATH.
+#17 3.159   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#17 3.441 Successfully installed MarkupSafe-3.0.2 PyYAML-6.0.2 ai-service-0.1.0 aiofiles-24.1.0 aiogram-3.21.0 aiohappyeyeballs-2.6.1 aiohttp-3.12.15 aiosignal-1.4.0 alembic-1.16.4 annotated-types-0.7.0 anyio-4.10.0 attrs-25.3.0 certifi-2025.8.3 click-8.2.1 fastapi-0.116.1 frozenlist-1.7.0 greenlet-3.2.4 h11-0.16.0 http-service-0.2.0 httpcore-1.0.9 httptools-0.6.4 httpx-0.28.1 idna-3.10 magic-filter-1.0.12 mako-1.3.10 multidict-6.6.4 propcache-0.3.2 psycopg-3.2.9 psycopg-binary-3.2.9 pydantic-2.11.7 pydantic-core-2.33.2 pydantic-settings-2.10.1 python-dotenv-1.1.1 sniffio-1.3.1 sqlalchemy-2.0.43 starlette-0.47.2 structlog-25.4.0 tenacity-9.1.2 tg-bot-service-0.1.0 typing-extensions-4.14.1 typing-inspection-0.4.1 uvicorn-0.35.0 uvloop-0.21.0 watchfiles-1.1.0 websockets-15.0.1 yarl-1.20.1
+#17 4.030 
+#17 4.030 [notice] A new release of pip is available: 25.0.1 -> 25.2
+#17 4.030 [notice] To update, run: pip install --upgrade pip
+#17 DONE 4.1s
+
+#18 [tg_bot] exporting to image
+#18 exporting layers
+#18 exporting layers 0.2s done
+#18 writing image sha256:b40241ce883cb951c7a90cc9313e356c82ac62506ea195243b48e0ffb4cbc82d done
+#18 naming to docker.io/library/http-tg_bot 0.0s done
+#18 DONE 0.3s
+
+#19 [ai_service] exporting to image
+#19 exporting layers 0.2s done
+#19 writing image sha256:bc64265f6f14bd8a3d6527d1f10154068dbd4908387ae69f489ec4a5aa3d0838 0.0s done
+#19 naming to docker.io/library/http-ai_service 0.0s done
+#19 DONE 0.3s
+
+#20 [tg_bot] resolving provenance for metadata file
+#20 DONE 0.0s
+
+#21 [ai_service] resolving provenance for metadata file
+#21 DONE 0.0s
+
+--- wait
+
+--- tg_bot logs (last 100)
+
+--- ai_service logs (last 100)
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8010 (Press CTRL+C to quit)
+
+--- test ai_service /generate
+{"reply":" It seems like you're trying to execute a ping command. However, I'm unable to execute commands directly as I'm an AI model designed for text-based conversation. But if you want to know more about the \"ping\" command in networking, here it is:\n\nThe `ping` command is a computer network administration utility used to test the reachability of a host on an IP network and measure the round-trip time for messages sent from the source host to a destination called a ping. The ping command sends Internet Control Message Protocol (ICMP) Echo packets to the specified host, and it receives ICMP Echo Reply packets in response.\n\nThe syntax is usually `ping [options] hostname`, where `hostname` is the name or IP address of the device you want to reach. Some common options include:\n- `-c count`: Specify the number of packets to send (default is 4).\n- `-t time`: Set the timeout for each packet (in seconds, default is 1 second).\n- `-w timeout`: Set the total test duration (in seconds, default is 60 seconds).\n- `-i interface`: Specify the network interface to use.\n\nYou can run this command in a terminal on most Unix-like operating systems or in Command Prompt on Windows."}
+--- test from tg_bot container to ai_service
+200
+{"reply":" To run a `ping` command from within a Telegram bot container (assuming you have Docker and Node.js-based Telegram bot), you'll need to follow these steps:\n\n1. First, make sure you have a 
+
+--- restart tg_bot to apply IPv4 session
+
+--- wait
+
+--- tg_bot logs (last 120)
+Received SIGTERM signal
+
+--- extract last incoming voice raw_json from tg_bot DB
+ id |          created_at           | has_voice |                                                                                                                                                                                                                                                   raw_json_prefix                                                                                                                                                                                                                                                    
+----+-------------------------------+-----------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 18 | 2025-08-14 22:13:05.030837+00 | f         | {"chat": {"id": 209923418, "bio": null, "type": "private", "photo": null, "title": null, "is_forum": null, "location": null, "username": "crazalex", "birthdate": null, "last_name": "Павлов", "first_name": "Алексей", "description": null, "invite_link": null, "permissions": null, "personal_chat": null, "business_intro": null, "linked_chat_id": null, "pinned_message": null, "accent_color_id": null, "join_by_request": null, "slow_mode_delay": null, "active_usernames": null, "sticker_set_name": null,
+ 17 | 2025-08-14 22:10:36.835048+00 | t         | {"chat": {"id": 209923418, "bio": null, "type": "private", "photo": null, "title": null, "is_forum": null, "location": null, "username": "crazalex", "birthdate": null, "last_name": "Павлов", "first_name": "Алексей", "description": null, "invite_link": null, "permissions": null, "personal_chat": null, "business_intro": null, "linked_chat_id": null, "pinned_message": null, "accent_color_id": null, "join_by_request": null, "slow_mode_delay": null, "active_usernames": null, "sticker_set_name": null,
+ 16 | 2025-08-14 22:06:27.094022+00 | f         | {"chat": {"id": 1360219946, "bio": null, "type": "private", "photo": null, "title": null, "is_forum": null, "location": null, "username": "Sergei0228", "birthdate": null, "last_name": null, "first_name": "Sergei", "description": null, "invite_link": null, "permissions": null, "personal_chat": null, "business_intro": null, "linked_chat_id": null, "pinned_message": null, "accent_color_id": null, "join_by_request": null, "slow_mode_delay": null, "active_usernames": null, "sticker_set_name": null, "
+ 15 | 2025-08-14 22:05:53.276053+00 | f         | {"chat": {"id": 1360219946, "bio": null, "type": "private", "photo": null, "title": null, "is_forum": null, "location": null, "username": "Sergei0228", "birthdate": null, "last_name": null, "first_name": "Sergei", "description": null, "invite_link": null, "permissions": null, "personal_chat": null, "business_intro": null, "linked_chat_id": null, "pinned_message": null, "accent_color_id": null, "join_by_request": null, "slow_mode_delay": null, "active_usernames": null, "sticker_set_name": null, "
+ 14 | 2025-08-14 22:04:26.967635+00 | f         | {"chat": {"id": 209923418, "bio": null, "type": "private", "photo": null, "title": null, "is_forum": null, "location": null, "username": "crazalex", "birthdate": null, "last_name": "Павлов", "first_name": "Алексей", "description": null, "invite_link": null, "permissions": null, "personal_chat": null, "business_intro": null, "linked_chat_id": null, "pinned_message": null, "accent_color_id": null, "join_by_request": null, "slow_mode_delay": null, "active_usernames": null, "sticker_set_name": null,
+(5 rows)
+
+
+--- show full raw_json of the last row with voice
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              raw_json                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"chat": {"id": 209923418, "bio": null, "type": "private", "photo": null, "title": null, "is_forum": null, "location": null, "username": "crazalex", "birthdate": null, "last_name": "Павлов", "first_name": "Алексей", "description": null, "invite_link": null, "permissions": null, "personal_chat": null, "business_intro": null, "linked_chat_id": null, "pinned_message": null, "accent_color_id": null, "join_by_request": null, "slow_mode_delay": null, "active_usernames": null, "sticker_set_name": null, "business_location": null, "has_hidden_members": null, "available_reactions": null, "can_set_sticker_set": null, "has_visible_history": null, "has_private_forwards": null, "has_protected_content": null, "join_to_send_messages": null, "business_opening_hours": null, "unrestrict_boost_count": null, "profile_accent_color_id": null, "message_auto_delete_time": null, "background_custom_emoji_id": null, "emoji_status_custom_emoji_id": null, "emoji_status_expiration_date": null, "custom_emoji_sticker_set_name": null, "has_aggressive_anti_spam_enabled": null, "profile_background_custom_emoji_id": null, "has_restricted_voice_and_video_messages": null}, "date": 1755209584, "dice": null, "game": null, "gift": null, "poll": null, "text": "а?", "audio": null, "photo": null, "quote": {"text": "как бы ты хотел чтобы тебя звали?", "entities": null, "position": 0, "is_manual": true}, "story": null, "venue": null, "video": null, "voice": null, "caption": null, "contact": null, "invoice": null, "sticker": null, "via_bot": null, "document": null, "entities": null, "giveaway": null, "location": null, "animation": null, "checklist": null, "edit_date": null, "effect_id": null, "from_user": {"id": 209923418, "is_bot": false, "username": "crazalex", "last_name": "Павлов", "first_name": "Алексей", "is_premium": true, "language_code": "ru", "can_join_groups": null, "has_main_web_app": null, "can_connect_to_business": null, "supports_inline_queries": null, "added_to_attachment_menu": null, "can_read_all_group_messages": null}, "message_id": 36, "paid_media": null, "video_note": null, "boost_added": null, "chat_shared": null, "sender_chat": null, "unique_gift": null, "user_shared": null, "forward_date": null, "forward_from": null, "reply_markup": null, "users_shared": null, "web_app_data": null, "passport_data": null, "external_reply": null, "forward_origin": null, "media_group_id": null, "new_chat_photo": null, "new_chat_title": null, "pinned_message": null, "reply_to_story": null, "is_from_offline": null, "paid_star_count": null, "author_signature": null, "caption_entities": null, "giveaway_created": null, "giveaway_winners": null, "is_topic_message": null, "left_chat_member": null, "new_chat_members": null, "refunded_payment": null, "reply_to_message": {"chat": {"id": 209923418, "bio": null, "type": "private", "photo": null, "title": null, "is_forum": null, "location": null, "username": "crazalex", "birthdate": null, "last_name": "Павлов", "first_name": "Алексей", "description": null, "invite_link": null, "permissions": null, "personal_chat": null, "business_intro": null, "linked_chat_id": null, "pinned_message": null, "accent_color_id": null, "join_by_request": null, "slow_mode_delay": null, "active_usernames": null, "sticker_set_name": null, "business_location": null, "has_hidden_members": null, "available_reactions": null, "can_set_sticker_set": null, "has_visible_history": null, "has_private_forwards": null, "has_protected_content": null, "join_to_send_messages": null, "business_opening_hours": null, "unrestrict_boost_count": null, "profile_accent_color_id": null, "message_auto_delete_time": null, "background_custom_emoji_id": null, "emoji_status_custom_emoji_id": null, "emoji_status_expiration_date": null, "custom_emoji_sticker_set_name": null, "has_aggressive_anti_spam_enabled": null, "profile_background_custom_emoji_id": null, "has_restricted_voice_and_video_messages": null}, "date": 1755205900, "dice": null, "game": null, "gift": null, "poll": null, "text": "как бы ты хотел чтобы тебя звали?", "audio": null, "photo": null, "quote": null, "story": null, "venue": null, "video": null, "voice": null, "caption": null, "contact": null, "invoice": null, "sticker": null, "via_bot": null, "document": null, "entities": null, "giveaway": null, "location": null, "animation": null, "checklist": null, "edit_date": null, "effect_id": null, "from_user": {"id": 209923418, "is_bot": false, "username": "crazalex", "last_name": "Павлов", "first_name": "Алексей", "is_premium": true, "language_code": "ru", "can_join_groups": null, "has_main_web_app": null, "can_connect_to_business": null, "supports_inline_queries": null, "added_to_attachment_menu": null, "can_read_all_group_messages": null}, "message_id": 23, "paid_media": null, "video_note": null, "boost_added": null, "chat_shared": null, "sender_chat": null, "unique_gift": null, "user_shared": null, "forward_date": null, "forward_from": null, "reply_markup": null, "users_shared": null, "web_app_data": null, "passport_data": null, "external_reply": null, "forward_origin": null, "media_group_id": null, "new_chat_photo": null, "new_chat_title": null, "pinned_message": null, "reply_to_story": null, "is_from_offline": null, "paid_star_count": null, "author_signature": null, "caption_entities": null, "giveaway_created": null, "giveaway_winners": null, "is_topic_message": null, "left_chat_member": null, "new_chat_members": null, "refunded_payment": null, "reply_to_message": null, "video_chat_ended": null, "connected_website": null, "delete_chat_photo": null, "forward_from_chat": null, "forward_signature": null, "has_media_spoiler": null, "message_thread_id": null, "forum_topic_closed": null, "forum_topic_edited": null, "giveaway_completed": null, "group_chat_created": null, "migrate_to_chat_id": null, "sender_boost_count": null, "successful_payment": null, "video_chat_started": null, "chat_background_set": null, "forum_topic_created": null, "forward_sender_name": null, "sender_business_bot": null, "channel_chat_created": null, "checklist_tasks_done": null, "forum_topic_reopened": null, "is_automatic_forward": null, "link_preview_options": null, "migrate_from_chat_id": null, "video_chat_scheduled": null, "write_access_allowed": null, "checklist_tasks_added": null, "has_protected_content": null, "business_connection_id": null, "forward_from_message_id": null, "supergroup_chat_created": null, "show_caption_above_media": null, "proximity_alert_triggered": null, "general_forum_topic_hidden": null, "paid_message_price_changed": null, "direct_message_price_changed": null, "general_forum_topic_unhidden": null, "video_chat_participants_invited": null, "message_auto_delete_timer_changed": null}, "video_chat_ended": null, "connected_website": null, "delete_chat_photo": null, "forward_from_chat": null, "forward_signature": null, "has_media_spoiler": null, "message_thread_id": null, "forum_topic_closed": null, "forum_topic_edited": null, "giveaway_completed": null, "group_chat_created": null, "migrate_to_chat_id": null, "sender_boost_count": null, "successful_payment": null, "video_chat_started": null, "chat_background_set": null, "forum_topic_created": null, "forward_sender_name": null, "sender_business_bot": null, "channel_chat_created": null, "checklist_tasks_done": null, "forum_topic_reopened": null, "is_automatic_forward": null, "link_preview_options": null, "migrate_from_chat_id": null, "video_chat_scheduled": null, "write_access_allowed": null, "checklist_tasks_added": null, "has_protected_content": null, "business_connection_id": null, "forward_from_message_id": null, "supergroup_chat_created": null, "show_caption_above_media": null, "proximity_alert_triggered": null, "general_forum_topic_hidden": null, "paid_message_price_changed": null, "direct_message_price_changed": null, "general_forum_topic_unhidden": null, "video_chat_participants_invited": null, "message_auto_delete_timer_changed": null}
+(1 row)
+
+
+--- last ai_service messages
+ id |  chat_id   |  user_id   |   role    |                                                                                               text_prefix                                                                                                |          created_at           
+----+------------+------------+-----------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------
+ 26 |  209923418 |  209923418 | assistant |  Я не понимаю, что вы хотите спросить. Абсолютно нового вопроса я не вижу. Может быть, уточните или предоставьте дополнительную информацию?                                                             +| 2025-08-14 22:13:13.668258+00
+    |            |            |           |                                                                                                                                                                                                         +| 
+    |            |            |           | Например, можно сказать: "Чем занимается Спектр-М?" Или "Ка                                                                                                                                              | 
+ 25 |  209923418 |  209923418 | user      | а?                                                                                                                                                                                                       | 2025-08-14 22:13:05.049286+00
+ 24 |  209923418 |  209923418 | assistant |                                                                                                                                                                                                          | 2025-08-14 22:10:36.872892+00
+ 23 |  209923418 |  209923418 | user      |                                                                                                                                                                                                          | 2025-08-14 22:10:36.851358+00
+ 22 | 1360219946 | 1360219946 | assistant |  Метеориты, которые могут причинить серьезный вред, называются астероидами. Астероиды, которые могут поразить Землю, образуют так называемую опасную ближнюю зону (ПНЗ). По данным NASA, ПНЗ содержит ок | 2025-08-14 22:07:05.480368+00
+ 21 | 1360219946 | 1360219946 | user      | Когда на землю упадет метеорит и разьебет все к хуям?                                                                                                                                                    | 2025-08-14 22:06:27.111173+00
+ 20 |  209923418 |  209923418 | assistant |  Вот список всех планет Солнечной системы:                                                                                                                                                              +| 2025-08-14 22:05:05.896546+00
+    |            |            |           |                                                                                                                                                                                                         +| 
+    |            |            |           | 1. Меркурий - ближайшая к Солнцу планета.                                                                                                                                                               +| 
+    |            |            |           | 2. Венера - вторая по близости к Солнцу планета.                                                                                                                                                        +| 
+    |            |            |           | 3. Земля - нашей родной планете.                                                                                                                                                                        +| 
+    |            |            |           | 4. Марс - известен как Красная п                                                                                                                                                                         | 
+ 19 |  209923418 |  209923418 | user      | планеты солнечной системы                                                                                                                                                                                | 2025-08-14 22:04:27.005396+00
+ 18 |         42 |          7 | assistant |  To run a `ping` command from within a Telegram bot container (assuming you have Docker and Node.js-based Telegram bot), you'll need to follow these steps:                                             +| 2025-08-14 22:01:52.41434+00
+    |            |            |           |                                                                                                                                                                                                         +| 
+    |            |            |           | 1. First, make sure you have a working Tele                                                                                                                                                              | 
+ 17 |         42 |          7 | user      | ping from tg container                                                                                                                                                                                   | 2025-08-14 22:01:12.244021+00
+(10 rows)
+
+
+--- loki logs tg_bot around voice (last 100)
+
+--- loki logs ai_service errors (last 50)
+
+--- rebuild & restart tg_bot after voice handler
+#0 building with "default" instance using docker driver
+
+#1 [tg_bot internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.06kB done
+#1 DONE 0.0s
+
+#2 [tg_bot] resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 1.7s
+
+#3 [tg_bot] docker-image://docker.io/docker/dockerfile:1@sha256:38387523653efa0039f8e1c89bb74a30504e76ee9f565e25c9a09841f9427b05
+#3 CACHED
+
+#4 [tg_bot internal] load metadata for docker.io/library/python:3.12-slim
+#4 DONE 0.0s
+
+#5 [tg_bot internal] load .dockerignore
+#5 transferring context: 161B done
+#5 DONE 0.0s
+
+#6 [tg_bot builder 1/5] FROM docker.io/library/python:3.12-slim
+#6 DONE 0.0s
+
+#7 [tg_bot internal] load build context
+#7 transferring context: 14.80kB done
+#7 DONE 0.0s
+
+#8 [tg_bot builder 2/5] WORKDIR /app
+#8 CACHED
+
+#9 [tg_bot builder 3/5] RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
+#9 CACHED
+
+#10 [tg_bot builder 4/5] COPY services ./services
+#10 DONE 0.1s
+
+#11 [tg_bot builder 5/5] RUN python -m pip install --upgrade pip &&     python -m pip wheel --wheel-dir /wheels services/tg_bot services/http_service services/ai_service
+#11 0.817 Requirement already satisfied: pip in /usr/local/lib/python3.12/site-packages (25.0.1)
+#11 1.413 Collecting pip
+#11 1.943   Downloading pip-25.2-py3-none-any.whl.metadata (4.7 kB)
+#11 2.020 Downloading pip-25.2-py3-none-any.whl (1.8 MB)
+#11 2.473    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 8.0 MB/s eta 0:00:00
+#11 2.481 Installing collected packages: pip
+#11 2.481   Attempting uninstall: pip
+#11 2.482     Found existing installation: pip 25.0.1
+#11 2.496     Uninstalling pip-25.0.1:
+#11 2.822       Successfully uninstalled pip-25.0.1
+#11 3.242 Successfully installed pip-25.2
+#11 3.243 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#11 3.673 Processing ./services/tg_bot
+#11 3.674   Installing build dependencies: started
+#11 5.877   Installing build dependencies: finished with status 'done'
+#11 5.878   Getting requirements to build wheel: started
+#11 6.338   Getting requirements to build wheel: finished with status 'done'
+#11 6.339   Preparing metadata (pyproject.toml): started
+#11 6.765   Preparing metadata (pyproject.toml): finished with status 'done'
+#11 6.766 Processing ./services/http_service
+#11 6.767   Installing build dependencies: started
+#11 9.033   Installing build dependencies: finished with status 'done'
+#11 9.033   Getting requirements to build wheel: started
+#11 9.489   Getting requirements to build wheel: finished with status 'done'
+#11 9.489   Preparing metadata (pyproject.toml): started
+#11 9.900   Preparing metadata (pyproject.toml): finished with status 'done'
+#11 9.901 Processing ./services/ai_service
+#11 9.902   Installing build dependencies: started
+#11 12.11   Installing build dependencies: finished with status 'done'
+#11 12.11   Getting requirements to build wheel: started
+#11 12.54   Getting requirements to build wheel: finished with status 'done'
+#11 12.54   Preparing metadata (pyproject.toml): started
+#11 12.96   Preparing metadata (pyproject.toml): finished with status 'done'
+#11 13.54 Collecting aiogram>=3.12 (from tg_bot_service==0.1.0)
+#11 14.03   Downloading aiogram-3.21.0-py3-none-any.whl.metadata (7.6 kB)
+#11 14.13 Collecting httpx>=0.27 (from tg_bot_service==0.1.0)
+#11 14.20   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+#11 14.34 Collecting fastapi>=0.110 (from http_service==0.2.0)
+#11 14.40   Downloading fastapi-0.116.1-py3-none-any.whl.metadata (28 kB)
+#11 14.54 Collecting uvicorn>=0.27 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 14.61   Downloading uvicorn-0.35.0-py3-none-any.whl.metadata (6.5 kB)
+#11 14.70 Collecting tenacity>=8.2 (from http_service==0.2.0)
+#11 14.76   Downloading tenacity-9.1.2-py3-none-any.whl.metadata (1.2 kB)
+#11 15.00 Collecting pydantic>=2.6 (from http_service==0.2.0)
+#11 15.07   Downloading pydantic-2.11.7-py3-none-any.whl.metadata (67 kB)
+#11 15.23 Collecting pydantic-settings>=2.2 (from http_service==0.2.0)
+#11 15.29   Downloading pydantic_settings-2.10.1-py3-none-any.whl.metadata (3.4 kB)
+#11 15.37 Collecting structlog>=24.1 (from http_service==0.2.0)
+#11 15.44   Downloading structlog-25.4.0-py3-none-any.whl.metadata (7.6 kB)
+#11 15.73 Collecting sqlalchemy>=2.0 (from http_service==0.2.0)
+#11 15.79   Downloading sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (9.6 kB)
+#11 15.87 Collecting psycopg>=3.2 (from psycopg[binary]>=3.2->http_service==0.2.0)
+#11 15.94   Downloading psycopg-3.2.9-py3-none-any.whl.metadata (4.5 kB)
+#11 16.02 Collecting alembic>=1.13 (from http_service==0.2.0)
+#11 16.09   Downloading alembic-1.16.4-py3-none-any.whl.metadata (7.3 kB)
+#11 16.24 Collecting aiofiles<24.2,>=23.2.1 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 16.31   Downloading aiofiles-24.1.0-py3-none-any.whl.metadata (10 kB)
+#11 16.67 Collecting aiohttp<3.13,>=3.9.0 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 16.74   Downloading aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.7 kB)
+#11 16.81 Collecting certifi>=2023.7.22 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 16.88   Downloading certifi-2025.8.3-py3-none-any.whl.metadata (2.4 kB)
+#11 16.95 Collecting magic-filter<1.1,>=1.0.12 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.02   Downloading magic_filter-1.0.12-py3-none-any.whl.metadata (1.5 kB)
+#11 17.10 Collecting typing-extensions<=5.0,>=4.7.0 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.17   Downloading typing_extensions-4.14.1-py3-none-any.whl.metadata (3.0 kB)
+#11 17.24 Collecting aiohappyeyeballs>=2.5.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.31   Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl.metadata (5.9 kB)
+#11 17.38 Collecting aiosignal>=1.4.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.45   Downloading aiosignal-1.4.0-py3-none-any.whl.metadata (3.7 kB)
+#11 17.52 Collecting attrs>=17.3.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.58   Downloading attrs-25.3.0-py3-none-any.whl.metadata (10 kB)
+#11 17.68 Collecting frozenlist>=1.1.1 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.76   Downloading frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (18 kB)
+#11 17.94 Collecting multidict<7.0,>=4.5 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 18.00   Downloading multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.3 kB)
+#11 18.09 Collecting propcache>=0.2.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 18.16   Downloading propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (12 kB)
+#11 18.36 Collecting yarl<2.0,>=1.17.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 18.42   Downloading yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (73 kB)
+#11 18.53 Collecting annotated-types>=0.6.0 (from pydantic>=2.6->http_service==0.2.0)
+#11 18.60   Downloading annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+#11 18.98 Collecting pydantic-core==2.33.2 (from pydantic>=2.6->http_service==0.2.0)
+#11 19.05   Downloading pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)
+#11 19.13 Collecting typing-inspection>=0.4.0 (from pydantic>=2.6->http_service==0.2.0)
+#11 19.19   Downloading typing_inspection-0.4.1-py3-none-any.whl.metadata (2.6 kB)
+#11 19.27 Collecting idna>=2.0 (from yarl<2.0,>=1.17.0->aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 19.33   Downloading idna-3.10-py3-none-any.whl.metadata (10 kB)
+#11 19.43 Collecting Mako (from alembic>=1.13->http_service==0.2.0)
+#11 19.49   Downloading mako-1.3.10-py3-none-any.whl.metadata (2.9 kB)
+#11 19.58 Collecting starlette<0.48.0,>=0.40.0 (from fastapi>=0.110->http_service==0.2.0)
+#11 19.64   Downloading starlette-0.47.2-py3-none-any.whl.metadata (6.2 kB)
+#11 19.74 Collecting anyio<5,>=3.6.2 (from starlette<0.48.0,>=0.40.0->fastapi>=0.110->http_service==0.2.0)
+#11 19.80   Downloading anyio-4.10.0-py3-none-any.whl.metadata (4.0 kB)
+#11 19.88 Collecting sniffio>=1.1 (from anyio<5,>=3.6.2->starlette<0.48.0,>=0.40.0->fastapi>=0.110->http_service==0.2.0)
+#11 19.95   Downloading sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+#11 20.02 Collecting httpcore==1.* (from httpx>=0.27->tg_bot_service==0.1.0)
+#11 20.09   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+#11 20.17 Collecting h11>=0.16 (from httpcore==1.*->httpx>=0.27->tg_bot_service==0.1.0)
+#11 20.24   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+#11 20.37 Collecting psycopg-binary==3.2.9 (from psycopg[binary]>=3.2->http_service==0.2.0)
+#11 20.44   Downloading psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (2.9 kB)
+#11 20.53 Collecting python-dotenv>=0.21.0 (from pydantic-settings>=2.2->http_service==0.2.0)
+#11 20.59   Downloading python_dotenv-1.1.1-py3-none-any.whl.metadata (24 kB)
+#11 20.73 Collecting greenlet>=1 (from sqlalchemy>=2.0->http_service==0.2.0)
+#11 20.79   Downloading greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (4.1 kB)
+#11 20.87 Collecting click>=7.0 (from uvicorn>=0.27->uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 20.94   Downloading click-8.2.1-py3-none-any.whl.metadata (2.5 kB)
+#11 21.02 Collecting httptools>=0.6.3 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.08   Downloading httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (3.6 kB)
+#11 21.17 Collecting pyyaml>=5.1 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.23   Downloading PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (2.1 kB)
+#11 21.32 Collecting uvloop>=0.15.1 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.38   Downloading uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+#11 21.48 Collecting watchfiles>=0.13 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.55   Downloading watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+#11 21.69 Collecting websockets>=10.4 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.76   Downloading websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)
+#11 21.85 Collecting MarkupSafe>=0.9.2 (from Mako->alembic>=1.13->http_service==0.2.0)
+#11 21.92   Downloading MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.0 kB)
+#11 21.99 Downloading aiogram-3.21.0-py3-none-any.whl (677 kB)
+#11 22.18    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 677.3/677.3 kB 5.4 MB/s  0:00:00
+#11 22.25 Downloading aiofiles-24.1.0-py3-none-any.whl (15 kB)
+#11 22.32 Downloading aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.7 MB)
+#11 22.44    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 14.3 MB/s  0:00:00
+#11 22.50 Downloading magic_filter-1.0.12-py3-none-any.whl (11 kB)
+#11 22.57 Downloading multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (256 kB)
+#11 22.64 Downloading pydantic-2.11.7-py3-none-any.whl (444 kB)
+#11 22.72 Downloading pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.0 MB)
+#11 22.80    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 25.7 MB/s  0:00:00
+#11 22.87 Downloading typing_extensions-4.14.1-py3-none-any.whl (43 kB)
+#11 22.93 Downloading yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (355 kB)
+#11 23.01 Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl (15 kB)
+#11 23.07 Downloading aiosignal-1.4.0-py3-none-any.whl (7.5 kB)
+#11 23.14 Downloading alembic-1.16.4-py3-none-any.whl (247 kB)
+#11 23.21 Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+#11 23.28 Downloading attrs-25.3.0-py3-none-any.whl (63 kB)
+#11 23.35 Downloading certifi-2025.8.3-py3-none-any.whl (161 kB)
+#11 23.42 Downloading fastapi-0.116.1-py3-none-any.whl (95 kB)
+#11 23.49 Downloading starlette-0.47.2-py3-none-any.whl (72 kB)
+#11 23.55 Downloading anyio-4.10.0-py3-none-any.whl (107 kB)
+#11 23.62 Downloading frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (241 kB)
+#11 23.69 Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+#11 23.76 Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+#11 23.83 Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+#11 23.90 Downloading idna-3.10-py3-none-any.whl (70 kB)
+#11 23.97 Downloading propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (224 kB)
+#11 24.04 Downloading psycopg-3.2.9-py3-none-any.whl (202 kB)
+#11 24.11 Downloading psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (4.4 MB)
+#11 24.29    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.4/4.4 MB 23.8 MB/s  0:00:00
+#11 24.36 Downloading pydantic_settings-2.10.1-py3-none-any.whl (45 kB)
+#11 24.43 Downloading python_dotenv-1.1.1-py3-none-any.whl (20 kB)
+#11 24.50 Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+#11 24.57 Downloading sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+#11 24.67    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 31.0 MB/s  0:00:00
+#11 24.74 Downloading greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (607 kB)
+#11 24.76    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 607.6/607.6 kB 28.1 MB/s  0:00:00
+#11 24.83 Downloading structlog-25.4.0-py3-none-any.whl (68 kB)
+#11 24.90 Downloading tenacity-9.1.2-py3-none-any.whl (28 kB)
+#11 24.97 Downloading typing_inspection-0.4.1-py3-none-any.whl (14 kB)
+#11 25.03 Downloading uvicorn-0.35.0-py3-none-any.whl (66 kB)
+#11 25.10 Downloading click-8.2.1-py3-none-any.whl (102 kB)
+#11 25.17 Downloading httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (510 kB)
+#11 25.26 Downloading PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (767 kB)
+#11 25.29    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 767.5/767.5 kB 28.4 MB/s  0:00:00
+#11 25.36 Downloading uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (4.7 MB)
+#11 25.53    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.7/4.7 MB 26.6 MB/s  0:00:00
+#11 25.60 Downloading watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (452 kB)
+#11 25.68 Downloading websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (182 kB)
+#11 25.76 Downloading mako-1.3.10-py3-none-any.whl (78 kB)
+#11 25.83 Downloading MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (23 kB)
+#11 25.86 Saved /wheels/aiogram-3.21.0-py3-none-any.whl
+#11 25.86 Saved /wheels/aiofiles-24.1.0-py3-none-any.whl
+#11 25.86 Saved /wheels/aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.86 Saved /wheels/magic_filter-1.0.12-py3-none-any.whl
+#11 25.86 Saved /wheels/multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
+#11 25.86 Saved /wheels/pydantic-2.11.7-py3-none-any.whl
+#11 25.86 Saved /wheels/pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.86 Saved /wheels/typing_extensions-4.14.1-py3-none-any.whl
+#11 25.86 Saved /wheels/yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.86 Saved /wheels/aiohappyeyeballs-2.6.1-py3-none-any.whl
+#11 25.86 Saved /wheels/aiosignal-1.4.0-py3-none-any.whl
+#11 25.86 Saved /wheels/alembic-1.16.4-py3-none-any.whl
+#11 25.86 Saved /wheels/annotated_types-0.7.0-py3-none-any.whl
+#11 25.86 Saved /wheels/attrs-25.3.0-py3-none-any.whl
+#11 25.86 Saved /wheels/certifi-2025.8.3-py3-none-any.whl
+#11 25.86 Saved /wheels/fastapi-0.116.1-py3-none-any.whl
+#11 25.86 Saved /wheels/starlette-0.47.2-py3-none-any.whl
+#11 25.86 Saved /wheels/anyio-4.10.0-py3-none-any.whl
+#11 25.86 Saved /wheels/frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.86 Saved /wheels/httpx-0.28.1-py3-none-any.whl
+#11 25.86 Saved /wheels/httpcore-1.0.9-py3-none-any.whl
+#11 25.86 Saved /wheels/h11-0.16.0-py3-none-any.whl
+#11 25.86 Saved /wheels/idna-3.10-py3-none-any.whl
+#11 25.86 Saved /wheels/propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.86 Saved /wheels/psycopg-3.2.9-py3-none-any.whl
+#11 25.86 Saved /wheels/psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.86 Saved /wheels/pydantic_settings-2.10.1-py3-none-any.whl
+#11 25.86 Saved /wheels/python_dotenv-1.1.1-py3-none-any.whl
+#11 25.86 Saved /wheels/sniffio-1.3.1-py3-none-any.whl
+#11 25.86 Saved /wheels/sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.86 Saved /wheels/greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+#11 25.86 Saved /wheels/structlog-25.4.0-py3-none-any.whl
+#11 25.86 Saved /wheels/tenacity-9.1.2-py3-none-any.whl
+#11 25.86 Saved /wheels/typing_inspection-0.4.1-py3-none-any.whl
+#11 25.86 Saved /wheels/uvicorn-0.35.0-py3-none-any.whl
+#11 25.86 Saved /wheels/click-8.2.1-py3-none-any.whl
+#11 25.87 Saved /wheels/httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.87 Saved /wheels/PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.87 Saved /wheels/uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.87 Saved /wheels/watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.87 Saved /wheels/websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.87 Saved /wheels/mako-1.3.10-py3-none-any.whl
+#11 25.87 Saved /wheels/MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 25.87 Building wheels for collected packages: tg_bot_service, http_service, ai_service
+#11 25.87   Building wheel for tg_bot_service (pyproject.toml): started
+#11 26.29   Building wheel for tg_bot_service (pyproject.toml): finished with status 'done'
+#11 26.29   Created wheel for tg_bot_service: filename=tg_bot_service-0.1.0-py3-none-any.whl size=5753 sha256=0195d9361fc226c93142ab7252cd6bba93f8499bd45b46da69240f126abdadbc
+#11 26.29   Stored in directory: /tmp/pip-ephem-wheel-cache-posdexmk/wheels/2c/d3/10/b9d88edc85721a7ca40d90d1af0ce341bd0e3aa1c43c5efecc
+#11 26.29   Building wheel for http_service (pyproject.toml): started
+#11 26.72   Building wheel for http_service (pyproject.toml): finished with status 'done'
+#11 26.72   Created wheel for http_service: filename=http_service-0.2.0-py3-none-any.whl size=11373 sha256=b8334f76437bf839264c3ddefc68d1b2ec0274fcf95cf21277b901a19b3f22a1
+#11 26.72   Stored in directory: /tmp/pip-ephem-wheel-cache-posdexmk/wheels/d9/54/a6/db0b000b08e9a9e6315c20f6da687cf6ec5a47fe05624c67b8
+#11 26.73   Building wheel for ai_service (pyproject.toml): started
+#11 27.15   Building wheel for ai_service (pyproject.toml): finished with status 'done'
+#11 27.15   Created wheel for ai_service: filename=ai_service-0.1.0-py3-none-any.whl size=4087 sha256=0c2433e09b5d65bcdeaf5c7bc849717bb2d1332f1c3e999b1674965bda537c3f
+#11 27.15   Stored in directory: /tmp/pip-ephem-wheel-cache-posdexmk/wheels/f3/b1/e1/ee5a0ab2dff8de4f669561f007c12531507078b9ab242eac96
+#11 27.15 Successfully built tg_bot_service http_service ai_service
+#11 DONE 27.4s
+
+#12 [tg_bot runtime 3/5] RUN useradd -m appuser
+#12 CACHED
+
+#13 [tg_bot runtime 4/5] COPY --from=builder /wheels /wheels
+#13 DONE 0.1s
+
+#14 [tg_bot runtime 5/5] RUN python -m pip install --no-cache-dir /wheels/*
+#14 0.707 Defaulting to user installation because normal site-packages is not writeable
+#14 0.793 Processing /wheels/MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.795 Processing /wheels/PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.796 Processing /wheels/ai_service-0.1.0-py3-none-any.whl
+#14 0.797 Processing /wheels/aiofiles-24.1.0-py3-none-any.whl
+#14 0.798 Processing /wheels/aiogram-3.21.0-py3-none-any.whl
+#14 0.803 Processing /wheels/aiohappyeyeballs-2.6.1-py3-none-any.whl
+#14 0.804 Processing /wheels/aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.807 Processing /wheels/aiosignal-1.4.0-py3-none-any.whl
+#14 0.807 Processing /wheels/alembic-1.16.4-py3-none-any.whl
+#14 0.809 Processing /wheels/annotated_types-0.7.0-py3-none-any.whl
+#14 0.809 Processing /wheels/anyio-4.10.0-py3-none-any.whl
+#14 0.810 Processing /wheels/attrs-25.3.0-py3-none-any.whl
+#14 0.814 Processing /wheels/certifi-2025.8.3-py3-none-any.whl
+#14 0.815 Processing /wheels/click-8.2.1-py3-none-any.whl
+#14 0.816 Processing /wheels/fastapi-0.116.1-py3-none-any.whl
+#14 0.819 Processing /wheels/frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.820 Processing /wheels/greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+#14 0.822 Processing /wheels/h11-0.16.0-py3-none-any.whl
+#14 0.823 Processing /wheels/http_service-0.2.0-py3-none-any.whl
+#14 0.823 Processing /wheels/httpcore-1.0.9-py3-none-any.whl
+#14 0.825 Processing /wheels/httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.826 Processing /wheels/httpx-0.28.1-py3-none-any.whl
+#14 0.827 Processing /wheels/idna-3.10-py3-none-any.whl
+#14 0.828 Processing /wheels/magic_filter-1.0.12-py3-none-any.whl
+#14 0.829 Processing /wheels/mako-1.3.10-py3-none-any.whl
+#14 0.830 Processing /wheels/multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
+#14 0.831 Processing /wheels/propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.832 Processing /wheels/psycopg-3.2.9-py3-none-any.whl
+#14 0.835 Processing /wheels/psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.839 Processing /wheels/pydantic-2.11.7-py3-none-any.whl
+#14 0.841 Processing /wheels/pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.843 Processing /wheels/pydantic_settings-2.10.1-py3-none-any.whl
+#14 0.844 Processing /wheels/python_dotenv-1.1.1-py3-none-any.whl
+#14 0.845 Processing /wheels/sniffio-1.3.1-py3-none-any.whl
+#14 0.846 Processing /wheels/sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.853 Processing /wheels/starlette-0.47.2-py3-none-any.whl
+#14 0.854 Processing /wheels/structlog-25.4.0-py3-none-any.whl
+#14 0.855 Processing /wheels/tenacity-9.1.2-py3-none-any.whl
+#14 0.856 Processing /wheels/tg_bot_service-0.1.0-py3-none-any.whl
+#14 0.856 Processing /wheels/typing_extensions-4.14.1-py3-none-any.whl
+#14 0.857 Processing /wheels/typing_inspection-0.4.1-py3-none-any.whl
+#14 0.858 Processing /wheels/uvicorn-0.35.0-py3-none-any.whl
+#14 0.859 Processing /wheels/uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.864 Processing /wheels/watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.865 Processing /wheels/websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.865 Processing /wheels/yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.936 Installing collected packages: websockets, uvloop, typing-extensions, tenacity, structlog, sniffio, PyYAML, python-dotenv, psycopg-binary, propcache, multidict, MarkupSafe, magic-filter, idna, httptools, h11, greenlet, frozenlist, click, certifi, attrs, annotated-types, aiohappyeyeballs, aiofiles, yarl, uvicorn, typing-inspection, sqlalchemy, pydantic-core, psycopg, mako, httpcore, anyio, aiosignal, watchfiles, starlette, pydantic, httpx, alembic, aiohttp, pydantic-settings, fastapi, aiogram, tg-bot-service, http-service, ai-service
+#14 0.993   WARNING: The script websockets is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 0.993   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 1.221   WARNING: The script dotenv is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 1.221   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 1.722   WARNING: The script uvicorn is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 1.722   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 2.492   WARNING: The script mako-render is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 2.492   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 2.635   WARNING: The script watchfiles is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 2.635   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 2.875   WARNING: The script httpx is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 2.875   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 2.965   WARNING: The script alembic is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 2.965   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 3.157   WARNING: The script fastapi is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 3.157   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 3.438 Successfully installed MarkupSafe-3.0.2 PyYAML-6.0.2 ai-service-0.1.0 aiofiles-24.1.0 aiogram-3.21.0 aiohappyeyeballs-2.6.1 aiohttp-3.12.15 aiosignal-1.4.0 alembic-1.16.4 annotated-types-0.7.0 anyio-4.10.0 attrs-25.3.0 certifi-2025.8.3 click-8.2.1 fastapi-0.116.1 frozenlist-1.7.0 greenlet-3.2.4 h11-0.16.0 http-service-0.2.0 httpcore-1.0.9 httptools-0.6.4 httpx-0.28.1 idna-3.10 magic-filter-1.0.12 mako-1.3.10 multidict-6.6.4 propcache-0.3.2 psycopg-3.2.9 psycopg-binary-3.2.9 pydantic-2.11.7 pydantic-core-2.33.2 pydantic-settings-2.10.1 python-dotenv-1.1.1 sniffio-1.3.1 sqlalchemy-2.0.43 starlette-0.47.2 structlog-25.4.0 tenacity-9.1.2 tg-bot-service-0.1.0 typing-extensions-4.14.1 typing-inspection-0.4.1 uvicorn-0.35.0 uvloop-0.21.0 watchfiles-1.1.0 websockets-15.0.1 yarl-1.20.1
+#14 4.052 
+#14 4.052 [notice] A new release of pip is available: 25.0.1 -> 25.2
+#14 4.052 [notice] To update, run: pip install --upgrade pip
+#14 DONE 4.1s
+
+#15 [tg_bot] exporting to image
+#15 exporting layers
+#15 exporting layers 0.2s done
+#15 writing image sha256:c4007b798599f87f958d938ac77ed3b0a9a2478efbb6c4600dcd754400208bb3 done
+#15 naming to docker.io/library/http-tg_bot done
+#15 DONE 0.3s
+
+#16 [tg_bot] resolving provenance for metadata file
+#16 DONE 0.0s
+
+--- wait
+
+--- tg_bot logs (last 60)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/appuser/.local/lib/python3.12/site-packages/tg_bot_service/main.py", line 136, in <module>
+    run()
+  File "/home/appuser/.local/lib/python3.12/site-packages/tg_bot_service/main.py", line 132, in run
+    asyncio.run(run_async())
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/home/appuser/.local/lib/python3.12/site-packages/tg_bot_service/main.py", line 119, in run_async
+    session = AiohttpSession(connector=connector)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/aiogram/client/session/aiohttp.py", line 95, in __init__
+    super().__init__(**kwargs)
+TypeError: BaseSession.__init__() got an unexpected keyword argument 'connector'
+
+--- show last incoming with voice flag again
+ id | has_voice |          created_at           
+----+-----------+-------------------------------
+ 19 | t         | 2025-08-14 22:13:32.013436+00
+ 18 | t         | 2025-08-14 22:13:05.030837+00
+ 17 | t         | 2025-08-14 22:10:36.835048+00
+ 16 | t         | 2025-08-14 22:06:27.094022+00
+ 15 | t         | 2025-08-14 22:05:53.276053+00
+(5 rows)
+
+
+--- restart tg_bot after removing connector
+
+--- wait
+
+--- tg_bot logs (last 120)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/appuser/.local/lib/python3.12/site-packages/tg_bot_service/main.py", line 136, in <module>
+    run()
+  File "/home/appuser/.local/lib/python3.12/site-packages/tg_bot_service/main.py", line 132, in run
+    asyncio.run(run_async())
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/home/appuser/.local/lib/python3.12/site-packages/tg_bot_service/main.py", line 119, in run_async
+    session = AiohttpSession(connector=connector)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/aiogram/client/session/aiohttp.py", line 95, in __init__
+    super().__init__(**kwargs)
+TypeError: BaseSession.__init__() got an unexpected keyword argument 'connector'
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/appuser/.local/lib/python3.12/site-packages/tg_bot_service/main.py", line 136, in <module>
+    run()
+  File "/home/appuser/.local/lib/python3.12/site-packages/tg_bot_service/main.py", line 132, in run
+    asyncio.run(run_async())
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/home/appuser/.local/lib/python3.12/site-packages/tg_bot_service/main.py", line 119, in run_async
+    session = AiohttpSession(connector=connector)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/appuser/.local/lib/python3.12/site-packages/aiogram/client/session/aiohttp.py", line 95, in __init__
+    super().__init__(**kwargs)
+TypeError: BaseSession.__init__() got an unexpected keyword argument 'connector'
+
+--- fetch last voice incoming (full)
+ id |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               raw_json                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+----+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 19 | {"chat": {"id": 209923418, "bio": null, "type": "private", "photo": null, "title": null, "is_forum": null, "location": null, "username": "crazalex", "birthdate": null, "last_name": "Павлов", "first_name": "Алексей", "description": null, "invite_link": null, "permissions": null, "personal_chat": null, "business_intro": null, "linked_chat_id": null, "pinned_message": null, "accent_color_id": null, "join_by_request": null, "slow_mode_delay": null, "active_usernames": null, "sticker_set_name": null, "business_location": null, "has_hidden_members": null, "available_reactions": null, "can_set_sticker_set": null, "has_visible_history": null, "has_private_forwards": null, "has_protected_content": null, "join_to_send_messages": null, "business_opening_hours": null, "unrestrict_boost_count": null, "profile_accent_color_id": null, "message_auto_delete_time": null, "background_custom_emoji_id": null, "emoji_status_custom_emoji_id": null, "emoji_status_expiration_date": null, "custom_emoji_sticker_set_name": null, "has_aggressive_anti_spam_enabled": null, "profile_background_custom_emoji_id": null, "has_restricted_voice_and_video_messages": null}, "date": 1755209611, "dice": null, "game": null, "gift": null, "poll": null, "text": "как бы ты хотел чтобы тебя звали?", "audio": null, "photo": null, "quote": null, "story": null, "venue": null, "video": null, "voice": null, "caption": null, "contact": null, "invoice": null, "sticker": null, "via_bot": null, "document": null, "entities": null, "giveaway": null, "location": null, "animation": null, "checklist": null, "edit_date": null, "effect_id": null, "from_user": {"id": 209923418, "is_bot": false, "username": "crazalex", "last_name": "Павлов", "first_name": "Алексей", "is_premium": true, "language_code": "ru", "can_join_groups": null, "has_main_web_app": null, "can_connect_to_business": null, "supports_inline_queries": null, "added_to_attachment_menu": null, "can_read_all_group_messages": null}, "message_id": 38, "paid_media": null, "video_note": null, "boost_added": null, "chat_shared": null, "sender_chat": null, "unique_gift": null, "user_shared": null, "forward_date": null, "forward_from": null, "reply_markup": null, "users_shared": null, "web_app_data": null, "passport_data": null, "external_reply": null, "forward_origin": null, "media_group_id": null, "new_chat_photo": null, "new_chat_title": null, "pinned_message": null, "reply_to_story": null, "is_from_offline": null, "paid_star_count": null, "author_signature": null, "caption_entities": null, "giveaway_created": null, "giveaway_winners": null, "is_topic_message": null, "left_chat_member": null, "new_chat_members": null, "refunded_payment": null, "reply_to_message": null, "video_chat_ended": null, "connected_website": null, "delete_chat_photo": null, "forward_from_chat": null, "forward_signature": null, "has_media_spoiler": null, "message_thread_id": null, "forum_topic_closed": null, "forum_topic_edited": null, "giveaway_completed": null, "group_chat_created": null, "migrate_to_chat_id": null, "sender_boost_count": null, "successful_payment": null, "video_chat_started": null, "chat_background_set": null, "forum_topic_created": null, "forward_sender_name": null, "sender_business_bot": null, "channel_chat_created": null, "checklist_tasks_done": null, "forum_topic_reopened": null, "is_automatic_forward": null, "link_preview_options": null, "migrate_from_chat_id": null, "video_chat_scheduled": null, "write_access_allowed": null, "checklist_tasks_added": null, "has_protected_content": null, "business_connection_id": null, "forward_from_message_id": null, "supergroup_chat_created": null, "show_caption_above_media": null, "proximity_alert_triggered": null, "general_forum_topic_hidden": null, "paid_message_price_changed": null, "direct_message_price_changed": null, "general_forum_topic_unhidden": null, "video_chat_participants_invited": null, "message_auto_delete_timer_changed": null}
+(1 row)
+
+
+--- fetch last AI messages for your chat
+   role    |                                                                 text_prefix                                                                 |          created_at           
+-----------+---------------------------------------------------------------------------------------------------------------------------------------------+-------------------------------
+ assistant |  Я не имею сознания, так что я не могу иметь имя. Мой вариант – помощник AI. Если вы желаете дать мне имя, то я рад принять его!           +| 2025-08-14 22:13:40.986977+00
+           |                                                                                                                                            +| 
+           | Как вам кажется, как звать меня? Возможно, "Алиса" или "Интеллектус"? Выберите любое имя, которое вы предпочитаете.                         | 
+ user      | как бы ты хотел чтобы тебя звали?                                                                                                           | 2025-08-14 22:13:32.029301+00
+ assistant |  Я не понимаю, что вы хотите спросить. Абсолютно нового вопроса я не вижу. Может быть, уточните или предоставьте дополнительную информацию?+| 2025-08-14 22:13:13.668258+00
+           |                                                                                                                                            +| 
+           | Например, можно сказать: "Чем занимается Спектр-М?" Или "Как создаются трансформеры?" Эти вопросы я бы мог ответить.                        | 
+ user      | а?                                                                                                                                          | 2025-08-14 22:13:05.049286+00
+ assistant |                                                                                                                                             | 2025-08-14 22:10:36.872892+00
+(5 rows)
+
+
+--- rebuild & restart ai_service and tg_bot after context system
+#0 building with "default" instance using docker driver
+
+#1 [tg_bot internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.06kB done
+#1 DONE 0.0s
+
+#2 [ai_service internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.06kB done
+#2 DONE 0.0s
+
+#3 [ai_service] resolve image config for docker-image://docker.io/docker/dockerfile:1
+#3 DONE 1.6s
+
+#4 [tg_bot] docker-image://docker.io/docker/dockerfile:1@sha256:38387523653efa0039f8e1c89bb74a30504e76ee9f565e25c9a09841f9427b05
+#4 CACHED
+
+#5 [ai_service internal] load metadata for docker.io/library/python:3.12-slim
+#5 DONE 0.0s
+
+#6 [tg_bot internal] load .dockerignore
+#6 transferring context: 161B done
+#6 DONE 0.0s
+
+#7 [ai_service internal] load .dockerignore
+#7 transferring context: 161B done
+#7 DONE 0.0s
+
+#8 [tg_bot builder 1/5] FROM docker.io/library/python:3.12-slim
+#8 DONE 0.0s
+
+#9 [ai_service internal] load build context
+#9 transferring context: 28.27kB done
+#9 DONE 0.0s
+
+#10 [ai_service builder 2/5] WORKDIR /app
+#10 CACHED
+
+#11 [tg_bot internal] load build context
+#11 transferring context: 28.27kB done
+#11 DONE 0.0s
+
+#12 [tg_bot builder 3/5] RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
+#12 CACHED
+
+#13 [ai_service builder 4/5] COPY services ./services
+#13 DONE 0.1s
+
+#14 [tg_bot builder 5/5] RUN python -m pip install --upgrade pip &&     python -m pip wheel --wheel-dir /wheels services/tg_bot services/http_service services/ai_service
+#14 0.825 Requirement already satisfied: pip in /usr/local/lib/python3.12/site-packages (25.0.1)
+#14 1.406 Collecting pip
+#14 1.923   Downloading pip-25.2-py3-none-any.whl.metadata (4.7 kB)
+#14 2.000 Downloading pip-25.2-py3-none-any.whl (1.8 MB)
+#14 2.442    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 8.1 MB/s eta 0:00:00
+#14 2.450 Installing collected packages: pip
+#14 2.450   Attempting uninstall: pip
+#14 2.451     Found existing installation: pip 25.0.1
+#14 2.465     Uninstalling pip-25.0.1:
+#14 2.793       Successfully uninstalled pip-25.0.1
+#14 3.213 Successfully installed pip-25.2
+#14 3.213 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#14 3.655 Processing ./services/tg_bot
+#14 3.656   Installing build dependencies: started
+#14 5.881   Installing build dependencies: finished with status 'done'
+#14 5.882   Getting requirements to build wheel: started
+#14 6.350   Getting requirements to build wheel: finished with status 'done'
+#14 6.351   Preparing metadata (pyproject.toml): started
+#14 6.780   Preparing metadata (pyproject.toml): finished with status 'done'
+#14 6.781 Processing ./services/http_service
+#14 6.782   Installing build dependencies: started
+#14 9.018   Installing build dependencies: finished with status 'done'
+#14 9.018   Getting requirements to build wheel: started
+#14 9.474   Getting requirements to build wheel: finished with status 'done'
+#14 9.475   Preparing metadata (pyproject.toml): started
+#14 9.890   Preparing metadata (pyproject.toml): finished with status 'done'
+#14 9.892 Processing ./services/ai_service
+#14 9.893   Installing build dependencies: started
+#14 12.13   Installing build dependencies: finished with status 'done'
+#14 12.13   Getting requirements to build wheel: started
+#14 12.58   Getting requirements to build wheel: finished with status 'done'
+#14 12.58   Preparing metadata (pyproject.toml): started
+#14 13.01   Preparing metadata (pyproject.toml): finished with status 'done'
+#14 13.56 Collecting aiogram>=3.12 (from tg_bot_service==0.1.0)
+#14 14.08   Downloading aiogram-3.21.0-py3-none-any.whl.metadata (7.6 kB)
+#14 14.17 Collecting httpx>=0.27 (from tg_bot_service==0.1.0)
+#14 14.24   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+#14 14.37 Collecting fastapi>=0.110 (from http_service==0.2.0)
+#14 14.44   Downloading fastapi-0.116.1-py3-none-any.whl.metadata (28 kB)
+#14 14.58 Collecting uvicorn>=0.27 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#14 14.65   Downloading uvicorn-0.35.0-py3-none-any.whl.metadata (6.5 kB)
+#14 14.73 Collecting tenacity>=8.2 (from http_service==0.2.0)
+#14 14.80   Downloading tenacity-9.1.2-py3-none-any.whl.metadata (1.2 kB)
+#14 15.03 Collecting pydantic>=2.6 (from http_service==0.2.0)
+#14 15.09   Downloading pydantic-2.11.7-py3-none-any.whl.metadata (67 kB)
+#14 15.26 Collecting pydantic-settings>=2.2 (from http_service==0.2.0)
+#14 15.33   Downloading pydantic_settings-2.10.1-py3-none-any.whl.metadata (3.4 kB)
+#14 15.40 Collecting structlog>=24.1 (from http_service==0.2.0)
+#14 15.47   Downloading structlog-25.4.0-py3-none-any.whl.metadata (7.6 kB)
+#14 15.76 Collecting sqlalchemy>=2.0 (from http_service==0.2.0)
+#14 15.83   Downloading sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (9.6 kB)
+#14 15.91 Collecting psycopg>=3.2 (from psycopg[binary]>=3.2->http_service==0.2.0)
+#14 15.98   Downloading psycopg-3.2.9-py3-none-any.whl.metadata (4.5 kB)
+#14 16.05 Collecting alembic>=1.13 (from http_service==0.2.0)
+#14 16.12   Downloading alembic-1.16.4-py3-none-any.whl.metadata (7.3 kB)
+#14 16.19 Collecting aiofiles<24.2,>=23.2.1 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#14 16.26   Downloading aiofiles-24.1.0-py3-none-any.whl.metadata (10 kB)
+#14 16.63 Collecting aiohttp<3.13,>=3.9.0 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#14 16.70   Downloading aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.7 kB)
+#14 16.77 Collecting certifi>=2023.7.22 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#14 16.84   Downloading certifi-2025.8.3-py3-none-any.whl.metadata (2.4 kB)
+#14 16.91 Collecting magic-filter<1.1,>=1.0.12 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#14 16.98   Downloading magic_filter-1.0.12-py3-none-any.whl.metadata (1.5 kB)
+#14 17.05 Collecting typing-extensions<=5.0,>=4.7.0 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#14 17.12   Downloading typing_extensions-4.14.1-py3-none-any.whl.metadata (3.0 kB)
+#14 17.19 Collecting aiohappyeyeballs>=2.5.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#14 17.26   Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl.metadata (5.9 kB)
+#14 17.33 Collecting aiosignal>=1.4.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#14 17.39   Downloading aiosignal-1.4.0-py3-none-any.whl.metadata (3.7 kB)
+#14 17.46 Collecting attrs>=17.3.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#14 17.53   Downloading attrs-25.3.0-py3-none-any.whl.metadata (10 kB)
+#14 17.63 Collecting frozenlist>=1.1.1 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#14 17.70   Downloading frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (18 kB)
+#14 17.87 Collecting multidict<7.0,>=4.5 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#14 17.94   Downloading multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.3 kB)
+#14 18.02 Collecting propcache>=0.2.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#14 18.09   Downloading propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (12 kB)
+#14 18.29 Collecting yarl<2.0,>=1.17.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#14 18.36   Downloading yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (73 kB)
+#14 18.46 Collecting annotated-types>=0.6.0 (from pydantic>=2.6->http_service==0.2.0)
+#14 18.53   Downloading annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+#14 18.91 Collecting pydantic-core==2.33.2 (from pydantic>=2.6->http_service==0.2.0)
+#14 18.98   Downloading pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)
+#14 19.05 Collecting typing-inspection>=0.4.0 (from pydantic>=2.6->http_service==0.2.0)
+#14 19.12   Downloading typing_inspection-0.4.1-py3-none-any.whl.metadata (2.6 kB)
+#14 19.19 Collecting idna>=2.0 (from yarl<2.0,>=1.17.0->aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#14 19.26   Downloading idna-3.10-py3-none-any.whl.metadata (10 kB)
+#14 19.35 Collecting Mako (from alembic>=1.13->http_service==0.2.0)
+#14 19.42   Downloading mako-1.3.10-py3-none-any.whl.metadata (2.9 kB)
+#14 19.50 Collecting starlette<0.48.0,>=0.40.0 (from fastapi>=0.110->http_service==0.2.0)
+#14 19.57   Downloading starlette-0.47.2-py3-none-any.whl.metadata (6.2 kB)
+#14 19.65 Collecting anyio<5,>=3.6.2 (from starlette<0.48.0,>=0.40.0->fastapi>=0.110->http_service==0.2.0)
+#14 19.72   Downloading anyio-4.10.0-py3-none-any.whl.metadata (4.0 kB)
+#14 19.80 Collecting sniffio>=1.1 (from anyio<5,>=3.6.2->starlette<0.48.0,>=0.40.0->fastapi>=0.110->http_service==0.2.0)
+#14 19.86   Downloading sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+#14 19.94 Collecting httpcore==1.* (from httpx>=0.27->tg_bot_service==0.1.0)
+#14 20.01   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+#14 20.09 Collecting h11>=0.16 (from httpcore==1.*->httpx>=0.27->tg_bot_service==0.1.0)
+#14 20.16   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+#14 20.29 Collecting psycopg-binary==3.2.9 (from psycopg[binary]>=3.2->http_service==0.2.0)
+#14 20.36   Downloading psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (2.9 kB)
+#14 20.44 Collecting python-dotenv>=0.21.0 (from pydantic-settings>=2.2->http_service==0.2.0)
+#14 20.51   Downloading python_dotenv-1.1.1-py3-none-any.whl.metadata (24 kB)
+#14 20.64 Collecting greenlet>=1 (from sqlalchemy>=2.0->http_service==0.2.0)
+#14 20.71   Downloading greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (4.1 kB)
+#14 20.78 Collecting click>=7.0 (from uvicorn>=0.27->uvicorn[standard]>=0.27->http_service==0.2.0)
+#14 20.85   Downloading click-8.2.1-py3-none-any.whl.metadata (2.5 kB)
+#14 20.93 Collecting httptools>=0.6.3 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#14 21.00   Downloading httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (3.6 kB)
+#14 21.08 Collecting pyyaml>=5.1 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#14 21.15   Downloading PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (2.1 kB)
+#14 21.23 Collecting uvloop>=0.15.1 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#14 21.30   Downloading uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+#14 21.40 Collecting watchfiles>=0.13 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#14 21.47   Downloading watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+#14 21.60 Collecting websockets>=10.4 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#14 21.67   Downloading websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)
+#14 21.76 Collecting MarkupSafe>=0.9.2 (from Mako->alembic>=1.13->http_service==0.2.0)
+#14 21.83   Downloading MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.0 kB)
+#14 21.90 Downloading aiogram-3.21.0-py3-none-any.whl (677 kB)
+#14 22.09    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 677.3/677.3 kB 5.3 MB/s  0:00:00
+#14 22.16 Downloading aiofiles-24.1.0-py3-none-any.whl (15 kB)
+#14 22.23 Downloading aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.7 MB)
+#14 22.36    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 13.8 MB/s  0:00:00
+#14 22.43 Downloading magic_filter-1.0.12-py3-none-any.whl (11 kB)
+#14 22.50 Downloading multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (256 kB)
+#14 22.57 Downloading pydantic-2.11.7-py3-none-any.whl (444 kB)
+#14 22.65 Downloading pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.0 MB)
+#14 22.73    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 25.9 MB/s  0:00:00
+#14 22.80 Downloading typing_extensions-4.14.1-py3-none-any.whl (43 kB)
+#14 22.87 Downloading yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (355 kB)
+#14 22.94 Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl (15 kB)
+#14 23.01 Downloading aiosignal-1.4.0-py3-none-any.whl (7.5 kB)
+#14 23.08 Downloading alembic-1.16.4-py3-none-any.whl (247 kB)
+#14 23.16 Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+#14 23.23 Downloading attrs-25.3.0-py3-none-any.whl (63 kB)
+#14 23.30 Downloading certifi-2025.8.3-py3-none-any.whl (161 kB)
+#14 23.37 Downloading fastapi-0.116.1-py3-none-any.whl (95 kB)
+#14 23.44 Downloading starlette-0.47.2-py3-none-any.whl (72 kB)
+#14 23.51 Downloading anyio-4.10.0-py3-none-any.whl (107 kB)
+#14 23.58 Downloading frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (241 kB)
+#14 23.65 Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+#14 23.73 Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+#14 23.80 Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+#14 23.86 Downloading idna-3.10-py3-none-any.whl (70 kB)
+#14 23.93 Downloading propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (224 kB)
+#14 24.01 Downloading psycopg-3.2.9-py3-none-any.whl (202 kB)
+#14 24.08 Downloading psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (4.4 MB)
+#14 24.26    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.4/4.4 MB 24.3 MB/s  0:00:00
+#14 24.33 Downloading pydantic_settings-2.10.1-py3-none-any.whl (45 kB)
+#14 24.40 Downloading python_dotenv-1.1.1-py3-none-any.whl (20 kB)
+#14 24.47 Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+#14 24.54 Downloading sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+#14 24.64    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 31.9 MB/s  0:00:00
+#14 24.71 Downloading greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (607 kB)
+#14 24.72    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 607.6/607.6 kB 82.9 MB/s  0:00:00
+#14 24.79 Downloading structlog-25.4.0-py3-none-any.whl (68 kB)
+#14 24.86 Downloading tenacity-9.1.2-py3-none-any.whl (28 kB)
+#14 24.93 Downloading typing_inspection-0.4.1-py3-none-any.whl (14 kB)
+#14 25.00 Downloading uvicorn-0.35.0-py3-none-any.whl (66 kB)
+#14 25.07 Downloading click-8.2.1-py3-none-any.whl (102 kB)
+#14 25.14 Downloading httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (510 kB)
+#14 25.21 Downloading PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (767 kB)
+#14 25.22    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 767.5/767.5 kB 72.2 MB/s  0:00:00
+#14 25.29 Downloading uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (4.7 MB)
+#14 25.49    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.7/4.7 MB 22.7 MB/s  0:00:00
+#14 25.56 Downloading watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (452 kB)
+#14 25.65 Downloading websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (182 kB)
+#14 25.72 Downloading mako-1.3.10-py3-none-any.whl (78 kB)
+#14 25.79 Downloading MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (23 kB)
+#14 25.82 Saved /wheels/aiogram-3.21.0-py3-none-any.whl
+#14 25.82 Saved /wheels/aiofiles-24.1.0-py3-none-any.whl
+#14 25.83 Saved /wheels/aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.83 Saved /wheels/magic_filter-1.0.12-py3-none-any.whl
+#14 25.83 Saved /wheels/multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
+#14 25.83 Saved /wheels/pydantic-2.11.7-py3-none-any.whl
+#14 25.83 Saved /wheels/pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.83 Saved /wheels/typing_extensions-4.14.1-py3-none-any.whl
+#14 25.83 Saved /wheels/yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.83 Saved /wheels/aiohappyeyeballs-2.6.1-py3-none-any.whl
+#14 25.83 Saved /wheels/aiosignal-1.4.0-py3-none-any.whl
+#14 25.83 Saved /wheels/alembic-1.16.4-py3-none-any.whl
+#14 25.83 Saved /wheels/annotated_types-0.7.0-py3-none-any.whl
+#14 25.83 Saved /wheels/attrs-25.3.0-py3-none-any.whl
+#14 25.83 Saved /wheels/certifi-2025.8.3-py3-none-any.whl
+#14 25.83 Saved /wheels/fastapi-0.116.1-py3-none-any.whl
+#14 25.83 Saved /wheels/starlette-0.47.2-py3-none-any.whl
+#14 25.83 Saved /wheels/anyio-4.10.0-py3-none-any.whl
+#14 25.83 Saved /wheels/frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.83 Saved /wheels/httpx-0.28.1-py3-none-any.whl
+#14 25.83 Saved /wheels/httpcore-1.0.9-py3-none-any.whl
+#14 25.83 Saved /wheels/h11-0.16.0-py3-none-any.whl
+#14 25.83 Saved /wheels/idna-3.10-py3-none-any.whl
+#14 25.83 Saved /wheels/propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.83 Saved /wheels/psycopg-3.2.9-py3-none-any.whl
+#14 25.83 Saved /wheels/psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.83 Saved /wheels/pydantic_settings-2.10.1-py3-none-any.whl
+#14 25.83 Saved /wheels/python_dotenv-1.1.1-py3-none-any.whl
+#14 25.83 Saved /wheels/sniffio-1.3.1-py3-none-any.whl
+#14 25.83 Saved /wheels/sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.83 Saved /wheels/greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+#14 25.83 Saved /wheels/structlog-25.4.0-py3-none-any.whl
+#14 25.83 Saved /wheels/tenacity-9.1.2-py3-none-any.whl
+#14 25.83 Saved /wheels/typing_inspection-0.4.1-py3-none-any.whl
+#14 25.83 Saved /wheels/uvicorn-0.35.0-py3-none-any.whl
+#14 25.83 Saved /wheels/click-8.2.1-py3-none-any.whl
+#14 25.83 Saved /wheels/httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.83 Saved /wheels/PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.83 Saved /wheels/uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.83 Saved /wheels/watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.84 Saved /wheels/websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.84 Saved /wheels/mako-1.3.10-py3-none-any.whl
+#14 25.84 Saved /wheels/MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 25.84 Building wheels for collected packages: tg_bot_service, http_service, ai_service
+#14 25.84   Building wheel for tg_bot_service (pyproject.toml): started
+#14 26.27   Building wheel for tg_bot_service (pyproject.toml): finished with status 'done'
+#14 26.27   Created wheel for tg_bot_service: filename=tg_bot_service-0.1.0-py3-none-any.whl size=7175 sha256=a9c8c115c8c29f60fd7c85402f6b733e9957ed0ce754f10970f88495c74f1d2c
+#14 26.27   Stored in directory: /tmp/pip-ephem-wheel-cache-5duuzrn9/wheels/2c/d3/10/b9d88edc85721a7ca40d90d1af0ce341bd0e3aa1c43c5efecc
+#14 26.27   Building wheel for http_service (pyproject.toml): started
+#14 26.70   Building wheel for http_service (pyproject.toml): finished with status 'done'
+#14 26.70   Created wheel for http_service: filename=http_service-0.2.0-py3-none-any.whl size=11373 sha256=0ae5a0f8d29762b6d5873ad2b248f04d20f5baa90b66318b9eba16c7fd225756
+#14 26.70   Stored in directory: /tmp/pip-ephem-wheel-cache-5duuzrn9/wheels/d9/54/a6/db0b000b08e9a9e6315c20f6da687cf6ec5a47fe05624c67b8
+#14 26.70   Building wheel for ai_service (pyproject.toml): started
+#14 27.15   Building wheel for ai_service (pyproject.toml): finished with status 'done'
+#14 27.15   Created wheel for ai_service: filename=ai_service-0.1.0-py3-none-any.whl size=4138 sha256=6d150f5ce246c4b8bd01c2d9a0f02a7951b4ffbf179eaceed8c994476d7ae6f9
+#14 27.15   Stored in directory: /tmp/pip-ephem-wheel-cache-5duuzrn9/wheels/f3/b1/e1/ee5a0ab2dff8de4f669561f007c12531507078b9ab242eac96
+#14 27.15 Successfully built tg_bot_service http_service ai_service
+#14 DONE 27.5s
+
+#15 [ai_service runtime 3/5] RUN useradd -m appuser
+#15 CACHED
+
+#16 [tg_bot runtime 4/5] COPY --from=builder /wheels /wheels
+#16 DONE 0.1s
+
+#17 [tg_bot runtime 5/5] RUN python -m pip install --no-cache-dir /wheels/*
+#17 0.754 Defaulting to user installation because normal site-packages is not writeable
+#17 0.845 Processing /wheels/MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.847 Processing /wheels/PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.849 Processing /wheels/ai_service-0.1.0-py3-none-any.whl
+#17 0.850 Processing /wheels/aiofiles-24.1.0-py3-none-any.whl
+#17 0.850 Processing /wheels/aiogram-3.21.0-py3-none-any.whl
+#17 0.856 Processing /wheels/aiohappyeyeballs-2.6.1-py3-none-any.whl
+#17 0.857 Processing /wheels/aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.859 Processing /wheels/aiosignal-1.4.0-py3-none-any.whl
+#17 0.860 Processing /wheels/alembic-1.16.4-py3-none-any.whl
+#17 0.861 Processing /wheels/annotated_types-0.7.0-py3-none-any.whl
+#17 0.862 Processing /wheels/anyio-4.10.0-py3-none-any.whl
+#17 0.863 Processing /wheels/attrs-25.3.0-py3-none-any.whl
+#17 0.867 Processing /wheels/certifi-2025.8.3-py3-none-any.whl
+#17 0.867 Processing /wheels/click-8.2.1-py3-none-any.whl
+#17 0.868 Processing /wheels/fastapi-0.116.1-py3-none-any.whl
+#17 0.871 Processing /wheels/frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.872 Processing /wheels/greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+#17 0.874 Processing /wheels/h11-0.16.0-py3-none-any.whl
+#17 0.874 Processing /wheels/http_service-0.2.0-py3-none-any.whl
+#17 0.875 Processing /wheels/httpcore-1.0.9-py3-none-any.whl
+#17 0.877 Processing /wheels/httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.878 Processing /wheels/httpx-0.28.1-py3-none-any.whl
+#17 0.879 Processing /wheels/idna-3.10-py3-none-any.whl
+#17 0.880 Processing /wheels/magic_filter-1.0.12-py3-none-any.whl
+#17 0.881 Processing /wheels/mako-1.3.10-py3-none-any.whl
+#17 0.882 Processing /wheels/multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
+#17 0.883 Processing /wheels/propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.884 Processing /wheels/psycopg-3.2.9-py3-none-any.whl
+#17 0.887 Processing /wheels/psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.891 Processing /wheels/pydantic-2.11.7-py3-none-any.whl
+#17 0.893 Processing /wheels/pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.895 Processing /wheels/pydantic_settings-2.10.1-py3-none-any.whl
+#17 0.896 Processing /wheels/python_dotenv-1.1.1-py3-none-any.whl
+#17 0.897 Processing /wheels/sniffio-1.3.1-py3-none-any.whl
+#17 0.898 Processing /wheels/sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.905 Processing /wheels/starlette-0.47.2-py3-none-any.whl
+#17 0.906 Processing /wheels/structlog-25.4.0-py3-none-any.whl
+#17 0.907 Processing /wheels/tenacity-9.1.2-py3-none-any.whl
+#17 0.908 Processing /wheels/tg_bot_service-0.1.0-py3-none-any.whl
+#17 0.908 Processing /wheels/typing_extensions-4.14.1-py3-none-any.whl
+#17 0.909 Processing /wheels/typing_inspection-0.4.1-py3-none-any.whl
+#17 0.909 Processing /wheels/uvicorn-0.35.0-py3-none-any.whl
+#17 0.911 Processing /wheels/uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.915 Processing /wheels/watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.916 Processing /wheels/websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.917 Processing /wheels/yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#17 0.988 Installing collected packages: websockets, uvloop, typing-extensions, tenacity, structlog, sniffio, PyYAML, python-dotenv, psycopg-binary, propcache, multidict, MarkupSafe, magic-filter, idna, httptools, h11, greenlet, frozenlist, click, certifi, attrs, annotated-types, aiohappyeyeballs, aiofiles, yarl, uvicorn, typing-inspection, sqlalchemy, pydantic-core, psycopg, mako, httpcore, anyio, aiosignal, watchfiles, starlette, pydantic, httpx, alembic, aiohttp, pydantic-settings, fastapi, aiogram, tg-bot-service, http-service, ai-service
+#17 1.046   WARNING: The script websockets is installed in '/home/appuser/.local/bin' which is not on PATH.
+#17 1.046   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#17 1.279   WARNING: The script dotenv is installed in '/home/appuser/.local/bin' which is not on PATH.
+#17 1.279   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#17 1.792   WARNING: The script uvicorn is installed in '/home/appuser/.local/bin' which is not on PATH.
+#17 1.792   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#17 2.575   WARNING: The script mako-render is installed in '/home/appuser/.local/bin' which is not on PATH.
+#17 2.575   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#17 2.721   WARNING: The script watchfiles is installed in '/home/appuser/.local/bin' which is not on PATH.
+#17 2.721   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#17 2.977   WARNING: The script httpx is installed in '/home/appuser/.local/bin' which is not on PATH.
+#17 2.977   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#17 3.073   WARNING: The script alembic is installed in '/home/appuser/.local/bin' which is not on PATH.
+#17 3.073   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#17 3.270   WARNING: The script fastapi is installed in '/home/appuser/.local/bin' which is not on PATH.
+#17 3.270   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#17 3.562 Successfully installed MarkupSafe-3.0.2 PyYAML-6.0.2 ai-service-0.1.0 aiofiles-24.1.0 aiogram-3.21.0 aiohappyeyeballs-2.6.1 aiohttp-3.12.15 aiosignal-1.4.0 alembic-1.16.4 annotated-types-0.7.0 anyio-4.10.0 attrs-25.3.0 certifi-2025.8.3 click-8.2.1 fastapi-0.116.1 frozenlist-1.7.0 greenlet-3.2.4 h11-0.16.0 http-service-0.2.0 httpcore-1.0.9 httptools-0.6.4 httpx-0.28.1 idna-3.10 magic-filter-1.0.12 mako-1.3.10 multidict-6.6.4 propcache-0.3.2 psycopg-3.2.9 psycopg-binary-3.2.9 pydantic-2.11.7 pydantic-core-2.33.2 pydantic-settings-2.10.1 python-dotenv-1.1.1 sniffio-1.3.1 sqlalchemy-2.0.43 starlette-0.47.2 structlog-25.4.0 tenacity-9.1.2 tg-bot-service-0.1.0 typing-extensions-4.14.1 typing-inspection-0.4.1 uvicorn-0.35.0 uvloop-0.21.0 watchfiles-1.1.0 websockets-15.0.1 yarl-1.20.1
+#17 4.181 
+#17 4.181 [notice] A new release of pip is available: 25.0.1 -> 25.2
+#17 4.181 [notice] To update, run: pip install --upgrade pip
+#17 DONE 4.3s
+
+#18 [ai_service] exporting to image
+#18 exporting layers
+#18 exporting layers 0.2s done
+#18 writing image sha256:5460b228c5ee612ed2855e5e53dfab7b9354684aa55c63fa616fbcb4c40422d4 done
+#18 naming to docker.io/library/http-ai_service 0.0s done
+#18 DONE 0.3s
+
+#19 [tg_bot] exporting to image
+#19 exporting layers 0.3s done
+#19 writing image sha256:ae7d99559684125acb58deed7b366a16b1208eb7b8bc3703741189e4ffe19425 done
+#19 naming to docker.io/library/http-tg_bot done
+#19 DONE 0.3s
+
+#20 [tg_bot] resolving provenance for metadata file
+#20 DONE 0.0s
+
+#21 [ai_service] resolving provenance for metadata file
+#21 DONE 0.0s
+
+--- wait
+
+--- ai_service /generate with system
+{"reply":" Я - помощник для автоматизации и тестирования микросервисов. Я могу:\n1. Запускать микросервисы в локальной или облачной среде.\n2. Отправлять HTTP-запросы к микросервисам и проверять полученные ответы.\n3. Выполнять точечную отладку кода приложения на уровне кодовых строк.\n4. Собирать статистику по производительности сервисов.\n5. Автоматизировать тесты для микросервисов.\n6. Мониторить метрики и логи в реальном времени.\n7. Имея исходники приложения, можно использовать поиск кода по ключевым словам или регулярным выражениям.\n8. Автоматически генерировать документацию для микросервисов из исходных файлов."}
+--- add intents for name-related questions
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+
+--- list top intents
+ id |         name         | match_type |             pattern              | priority | enabled 
+----+----------------------+------------+----------------------------------+----------+---------
+  4 | preferred_name_exact | substring  | как бы ты хотел чтобы тебя звали |      110 | t
+  5 | your_name            | substring  | как тебя зовут                   |      105 | t
+  1 | who_are_you          | substring  | кто ты                           |      100 | t
+  6 | your_name_alt        | substring  | как тебя звать                   |      100 | t
+  7 | your_name_wording    | substring  | твое имя                         |       95 | t
+  8 | your_name_wording2   | substring  | твоё имя                         |       95 | t
+  2 | what_can_you_do      | substring  | чем можешь помочь                |       90 | t
+  3 | what_are_you         | substring  | что ты                           |       80 | t
+(8 rows)
+
+
+--- restart tg_bot to apply menu
+
+--- wait
+
+--- tg_bot logs (last 80)
+Received SIGTERM signal
+
+--- docs diff
+ M CHANGELOG.md
+ M CONTRIBUTING.md
+ M PROJECT_GUIDE.md
+ M README.md
+ M TECHNICAL.md
+ M chat_history.md
+ M docker-compose.yml
+ M services/ai_service/src/ai_service/main.py
+ M services/tg_bot/src/tg_bot_service/db.py
+ M services/tg_bot/src/tg_bot_service/main.py
+?? monitoring/
+CHANGELOG.md
+CONTRIBUTING.md
+PROJECT_GUIDE.md
+README.md
+TECHNICAL.md
+chat_history.md
+docker-compose.yml
+services/ai_service/src/ai_service/main.py
+services/tg_bot/src/tg_bot_service/db.py
+services/tg_bot/src/tg_bot_service/main.py
+
+--- commit docs
+[feat/ai-service a8dffc9] docs: обновить README/PROJECT_GUIDE/TECHNICAL/CONTRIBUTING и CHANGELOG
+ 5 files changed, 230 insertions(+), 106 deletions(-)
+
+--- commit PRODUCT_REQUIREMENTS.md
+[feat/ai-service c5b0d16] docs: обновить PRODUCT_REQUIREMENTS.md под интенты, системный промпт, меню и мониторинг
+ 1 file changed, 62 insertions(+), 13 deletions(-)
+
+--- git status and fetch
+## feat/ai-service...origin/feat/ai-service [впереди 2]
+ M chat_history.md
+ M docker-compose.yml
+ M services/ai_service/src/ai_service/main.py
+ M services/tg_bot/src/tg_bot_service/db.py
+ M services/tg_bot/src/tg_bot_service/main.py
+?? monitoring/
+origin	https://github.com/craz/http_service.git (fetch)
+origin	https://github.com/craz/http_service.git (push)
+
+--- local branches
+  chore/guide-monorepo                 4de550b [origin/chore/guide-monorepo] docs(guide): monorepo services and branching policy
+  chore/infra-ollama                   4e1dc74 [origin/chore/infra-ollama] merge: feat/refactor-routers-and-migrations into main
+  docs/rules-and-changelog             fa13c8e [origin/docs/rules-and-changelog] docs(rules): add Cursor rules, changelog, contributing and PR template
+  docs/rules-and-changelog-orig        2c895d4 [origin/docs/rules-and-changelog: впереди 2, позади 1] docs(rules): add Cursor rules, changelog, contributing and PR template
+  feat/adm-service                     bf6c4f6 [origin/feat/adm-service] docs(history): update chat history after merge PR #10
+  feat/ai-agent                        a02fd24 [origin/feat/ai-agent] refactor(http): drop TgMessage usage from tg router (pass-through only)
+  feat/ai-context                      4e1dc74 [origin/feat/ai-context] merge: feat/refactor-routers-and-migrations into main
+* feat/ai-service                      c5b0d16 [origin/feat/ai-service: впереди 2] docs: обновить PRODUCT_REQUIREMENTS.md под интенты, системный промпт, меню и мониторинг
+  feat/ai-service-admin                4e1dc74 [origin/feat/ai-service-admin] merge: feat/refactor-routers-and-migrations into main
+  feat/bot-admin-settings              4e1dc74 [origin/feat/bot-admin-settings] merge: feat/refactor-routers-and-migrations into main
+  feat/docker-ngrok                    a0596b0 [origin/feat/docker-ngrok] feat(docker): add Dockerfile, .dockerignore and compose with ngrok
+  feat/http-core                       7e1ebee [origin/feat/http-core] chore(gitignore): avoid ignoring src/http_service by scoping to repo root
+  feat/pgadmin-ui                      51398e1 [origin/feat/pgadmin-ui] feat(pgadmin): attach external adm_pg_data volume and auto-register adm_pg in pgAdmin
+  feat/refactor-routers-and-migrations 7b62428 [origin/feat/refactor-routers-and-migrations: впереди 2] chore: finalize pending edits (tg router, tg_bot deps) before merge
+  feat/user-endpoint                   4f4559a [origin/feat/user-endpoint] feat(users): add /users/{id} endpoint with separate mock storage; tests
+  main                                 edcab77 [origin/main] feat(adm): add adm_web service (merge)
+  perf/db-indexes                      4e1dc74 [origin/perf/db-indexes] merge: feat/refactor-routers-and-migrations into main
+
+--- check adm services in docker-compose before merge
+30:  # Восстановление БД другого проекта из тома adm_pg_data
+31:  adm_pg:
+33:    container_name: adm_pg
+41:      - adm_pg_data:/var/lib/postgresql/data:rw
+119:  adm_web:
+123:    container_name: adm_web
+125:      - DB_HOST=adm_pg
+131:      - adm_pg
+181:  adm_pg_data:
+
+--- add & commit pending changes on feat/ai-service

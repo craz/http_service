@@ -14,6 +14,7 @@ class GenerateRequest(BaseModel):
     text: str
     chat_id: int | None = None
     user_id: int | None = None
+    system: str | None = None
 
 
 class GenerateResponse(BaseModel):
@@ -35,9 +36,11 @@ async def _startup() -> None:
 async def generate(req: GenerateRequest) -> GenerateResponse:
     async with session_scope(_session_factory) as session:
         session_id = await _ensure_session(session, req.chat_id, req.user_id)
+        if req.system:
+            await _save_message(session, session_id, role="system", text=req.system)
         await _save_message(session, session_id, role="user", text=req.text)
 
-    reply_text = await _generate_with_ollama(req.text)
+    reply_text = await _generate_with_ollama(req.text, req.system)
 
     async with session_scope(_session_factory) as session:
         await _save_message(session, session_id, role="assistant", text=reply_text)
@@ -45,12 +48,14 @@ async def generate(req: GenerateRequest) -> GenerateResponse:
     return GenerateResponse(reply=reply_text)
 
 
-async def _generate_with_ollama(prompt: str) -> str:
+async def _generate_with_ollama(prompt: str, system: str | None = None) -> str:
     base_url = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
     model = os.getenv("AI_MODEL", "mistral")
     url = f"{base_url}/api/generate"
     payload = {"model": model, "prompt": prompt, "stream": False}
-    timeout = httpx.Timeout(30.0)
+    if system:
+        payload["system"] = system
+    timeout = httpx.Timeout(120.0)
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
             resp = await client.post(url, json=payload)

@@ -1,0 +1,93 @@
+{
+  "intelephense.environment.includePaths": [
+    "vendor"
+  ],
+  "intelephense.files.exclude": [
+    "**/.git/**",
+    "**/node_modules/**",
+    "**/runtime/**",
+    "**/web/assets/**"
+  ],
+  "intelephense.environment.phpVersion": "8.3"
+}
+
+{
+    // PHP настройки
+    "php.validate.enable": true,
+    "php.suggest.basic": false,
+    "php.executablePath": "/usr/bin/php",
+    "php.validate.executablePath": "/usr/bin/php",
+    "intelephense.environment.phpExecutablePath": "/usr/bin/php",
+    
+    // Yii2 специфичные настройки
+    "files.associations": {
+        "*.php": "php",
+        "*.sql": "sql",
+        "*.yml": "yaml",
+        "*.yaml": "yaml"
+    },
+    
+    // Автодополнение и IntelliSense
+    "editor.suggestSelection": "first",
+    "editor.acceptSuggestionOnCommitCharacter": false,
+    "editor.acceptSuggestionOnEnter": "on",
+    "editor.quickSuggestions": {
+        "other": true,
+        "comments": false,
+        "strings": true
+    },
+    
+    // Форматирование кода
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+    
+    // Настройки для работы с файлами
+    "files.exclude": {
+        "**/runtime": true,
+        "**/web/assets": true,
+        "**/vendor": true,
+        "**/node_modules": true,
+        "**/.git": true
+    },
+    
+    // Поиск файлов
+    "search.exclude": {
+        "**/runtime": true,
+        "**/web/assets": true,
+        "**/vendor": true,
+        "**/node_modules": true
+    },
+    
+    // Настройки терминала
+    "terminal.integrated.defaultProfile.linux": "zsh",
+    "terminal.integrated.cwd": "${workspaceFolder}",
+    
+    // Настройки для отладки
+    "php.debug.ideKey": "VSCODE",
+    
+    // Настройки для работы с Git
+    "git.autofetch": true,
+    "git.confirmSync": false,
+    
+    // Настройки для работы с Docker
+    "docker.commands.attach": "docker exec -it ${containerId} /bin/bash",
+    
+    // Настройки для работы с файлами конфигурации
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000,
+    
+    // Настройки для работы с большими файлами
+    "files.maxMemoryForLargeFilesMB": 4096,
+    
+    // Настройки для работы с PHP
+    "phpcs.standard": "PSR2",
+    "phpcs.executablePath": "/usr/local/bin/phpcs",
+    "phpcs.ignorePatterns": [
+        "*/vendor/*",
+        "*/runtime/*",
+        "*/web/assets/*"
+    ]
+}

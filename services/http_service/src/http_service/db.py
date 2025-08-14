@@ -6,7 +6,7 @@ from typing import AsyncIterator, Any
 
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import text, DateTime, func, ForeignKey, BigInteger
+from sqlalchemy import text, DateTime, func, ForeignKey
 from sqlalchemy.dialects.postgresql import JSONB
 
 
@@ -21,6 +21,7 @@ class RequestLog(Base):
     method: Mapped[str]
     path: Mapped[str]
     status: Mapped[int]
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class RequestAudit(Base):
@@ -56,16 +57,7 @@ class ProxyAudit(Base):
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
-class TgMessage(Base):
-    __tablename__ = "tg_message"
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    chat_id: Mapped[int] = mapped_column(BigInteger)
-    user_id: Mapped[int | None] = mapped_column(BigInteger, default=None)
-    text: Mapped[str | None]
-    date_ts: Mapped[int | None] = mapped_column(BigInteger, default=None)
-    raw_json: Mapped[dict[str, Any] | None] = mapped_column(JSONB, default=None)
-    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+# Удалён доменно-специфичный объект Telegram. HTTP-сервис не хранит данные каналов.
 
 
 def make_engine() -> AsyncEngine:
@@ -90,6 +82,13 @@ async def init_models(engine: AsyncEngine) -> None:
                 ADD COLUMN IF NOT EXISTS request_log_id integer;
             CREATE INDEX IF NOT EXISTS idx_request_audit_created_at ON request_audit (created_at);
             CREATE INDEX IF NOT EXISTS idx_request_audit_request_log_id ON request_audit (request_log_id);
+            """
+        ))
+        await conn.execute(text(
+            """
+            ALTER TABLE request_log
+                ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();
+            CREATE INDEX IF NOT EXISTS idx_request_log_created_at ON request_log (created_at);
             """
         ))
         # добавляем FK, если его ещё нет
@@ -140,14 +139,7 @@ async def init_models(engine: AsyncEngine) -> None:
         ))
         await conn.execute(text("select 1"))
 
-        # индексы для tg_message
-        await conn.execute(text(
-            """
-            CREATE INDEX IF NOT EXISTS idx_tg_message_created_at ON tg_message (created_at);
-            CREATE INDEX IF NOT EXISTS idx_tg_message_chat_id ON tg_message (chat_id);
-            CREATE INDEX IF NOT EXISTS idx_tg_message_user_id ON tg_message (user_id);
-            """
-        ))
+        # HTTP-сервис не управляет таблицами каналов (например, Telegram/VK)
 
 
 def make_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:

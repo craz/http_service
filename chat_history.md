@@ -24713,4 +24713,52 @@ services/adm_web: not present
 
 --- PR link for adm copy branchОткрой PR: https://github.com/craz/http_service/pull/new/feat/adm-copy-internal
 
---- commit chat history before merge
+--- commit chat history before merge[feat/adm-copy-internal a5bd5e6] chore(history): журнал перед merge feat/adm-copy-internal -> main
+ 1 file changed, 2059 insertions(+)
+
+--- switch to main & pullУже актуально.
+
+--- merge feat/adm-copy-internal into main (no-ff)Уже актуально.
+
+--- push main
+--- verify services/adm_web on mainитого 20
+drwxrwxr-x  5 craz craz 4096 авг 15 02:13 .
+drwxr-xr-x 13 craz craz 4096 авг 15 02:13 ..
+drwxrwxr-x  3 craz craz 4096 авг 14 18:29 ai_service
+drwxrwxr-x  4 craz craz 4096 авг 14 18:29 http_service
+drwxrwxr-x  3 craz craz 4096 авг 14 18:29 tg_bot
+119:  adm_web:
+121:      context: ../adm
+
+--- run tests on main# гарантируем, что Postgres из compose поднят
+docker compose --env-file .env up -d postgres
+# прогон pytest в одноразовом контейнере Python, подключённом к сети compose
+docker run --rm \
+	--network http_default \
+	-v /home/craz/Learn/http:/work \
+	-w /work \
+	python:3.12-slim \
+		bash -lc "python -m pip install --no-cache-dir -e services/tg_bot -e services/http_service pytest pytest-asyncio pytest-faker faker respx >/dev/null && PYTHONPATH=services/tg_bot/src:services/http_service/src TG_TEST_PGHOST=http_service_pg TG_TEST_PGPORT=5432 pytest -q"
+.....                                                                    [100%]
+=============================== warnings summary ===============================
+services/http_service/src/http_service/main.py:23
+  /work/services/http_service/src/http_service/main.py:23: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+../usr/local/lib/python3.12/site-packages/fastapi/applications.py:4495
+  /usr/local/lib/python3.12/site-packages/fastapi/applications.py:4495: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+--- save chat history before switching

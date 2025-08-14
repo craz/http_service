@@ -4181,3 +4181,573 @@ AI: привет кто ты?
 
 ---
 $ git add -A
+$ git commit -m 'fix(ai): call Ollama strictly; log errors; return empty string on failure; add /health'
+[feat/ai-service ba6a2d4] fix(ai): call Ollama strictly; log errors; return empty string on failure; add /health
+ 3 files changed, 294 insertions(+), 5 deletions(-)
+ create mode 100644 .github_netrc
+$ git push -u origin HEAD
+remote: error: GH013: Repository rule violations found for refs/heads/feat/ai-service.        
+remote: 
+remote: - GITHUB PUSH PROTECTION        
+remote:   —————————————————————————————————————————        
+remote:     Resolve the following violations before pushing again        
+remote: 
+remote:     - Push cannot contain secrets        
+remote: 
+remote:             
+remote:      (?) Learn how to resolve a blocked push        
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push        
+remote:             
+remote:             
+remote:       —— GitHub Personal Access Token ——————————————————————        
+remote:        locations:        
+remote:          - commit: ba6a2d4e3a223ef50ad6c3124d9aafa96b864732        
+remote:            path: .github_netrc:3        
+remote:             
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.        
+remote:        https://github.com/craz/http_service/security/secret-scanning/unblock-secret/31HflkzMYBzvfTlfRVevOMNzSib        
+remote:             
+remote: 
+remote: 
+To https://github.com/craz/http_service.git
+ ! [remote rejected] HEAD -> feat/ai-service (push declined due to repository rule violations)
+error: не удалось отправить некоторые ссылки в «https://github.com/craz/http_service.git»
+$ docker compose restart ai_service
+ Container ai_service_app  Restarting
+ Container ai_service_app  Started
+$ curl -sS http://localhost:8010/health | jq -r .ok,.models[]? | sed -n '1,5p'
+$ curl -sS http://localhost:8010/generate -H 'Content-Type: application/json' -d '{"text":"привет кто ты?"}' | jq -r .reply | sed -n '1,2p'
+
+---
+$ git rm -f .github_netrc
+rm '.github_netrc'
+$ git commit --amend --no-edit
+[feat/ai-service f8237ec] fix(ai): call Ollama strictly; log errors; return empty string on failure; add /health
+ Date: Fri Aug 15 00:02:57 2025 +0300
+ 2 files changed, 291 insertions(+), 5 deletions(-)
+$ git push -u origin HEAD --force-with-lease
+To https://github.com/craz/http_service.git
+   edcab77..f8237ec  HEAD -> feat/ai-service
+branch 'feat/ai-service' set up to track 'origin/feat/ai-service'.
+$ docker compose build ai_service
+#0 building with "default" instance using docker driver
+
+#1 [ai_service internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.06kB done
+#1 DONE 0.0s
+
+#2 [ai_service] resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 1.7s
+
+#3 [ai_service] docker-image://docker.io/docker/dockerfile:1@sha256:38387523653efa0039f8e1c89bb74a30504e76ee9f565e25c9a09841f9427b05
+#3 CACHED
+
+#4 [ai_service internal] load metadata for docker.io/library/python:3.12-slim
+#4 DONE 0.0s
+
+#5 [ai_service internal] load .dockerignore
+#5 transferring context: 161B done
+#5 DONE 0.0s
+
+#6 [ai_service builder 1/5] FROM docker.io/library/python:3.12-slim
+#6 DONE 0.0s
+
+#7 [ai_service internal] load build context
+#7 transferring context: 96.91kB done
+#7 DONE 0.0s
+
+#8 [ai_service builder 2/5] WORKDIR /app
+#8 CACHED
+
+#9 [ai_service builder 3/5] RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
+#9 CACHED
+
+#10 [ai_service builder 4/5] COPY services ./services
+#10 DONE 0.0s
+
+#11 [ai_service builder 5/5] RUN python -m pip install --upgrade pip &&     python -m pip wheel --wheel-dir /wheels services/tg_bot services/http_service services/ai_service
+#11 0.797 Requirement already satisfied: pip in /usr/local/lib/python3.12/site-packages (25.0.1)
+#11 1.397 Collecting pip
+#11 1.928   Downloading pip-25.2-py3-none-any.whl.metadata (4.7 kB)
+#11 2.003 Downloading pip-25.2-py3-none-any.whl (1.8 MB)
+#11 2.455    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 8.1 MB/s eta 0:00:00
+#11 2.463 Installing collected packages: pip
+#11 2.463   Attempting uninstall: pip
+#11 2.464     Found existing installation: pip 25.0.1
+#11 2.478     Uninstalling pip-25.0.1:
+#11 2.805       Successfully uninstalled pip-25.0.1
+#11 3.224 Successfully installed pip-25.2
+#11 3.225 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#11 3.653 Processing ./services/tg_bot
+#11 3.654   Installing build dependencies: started
+#11 5.911   Installing build dependencies: finished with status 'done'
+#11 5.911   Getting requirements to build wheel: started
+#11 6.378   Getting requirements to build wheel: finished with status 'done'
+#11 6.378   Preparing metadata (pyproject.toml): started
+#11 6.806   Preparing metadata (pyproject.toml): finished with status 'done'
+#11 6.807 Processing ./services/http_service
+#11 6.808   Installing build dependencies: started
+#11 9.075   Installing build dependencies: finished with status 'done'
+#11 9.075   Getting requirements to build wheel: started
+#11 9.526   Getting requirements to build wheel: finished with status 'done'
+#11 9.527   Preparing metadata (pyproject.toml): started
+#11 9.944   Preparing metadata (pyproject.toml): finished with status 'done'
+#11 9.945 Processing ./services/ai_service
+#11 9.945   Installing build dependencies: started
+#11 12.19   Installing build dependencies: finished with status 'done'
+#11 12.19   Getting requirements to build wheel: started
+#11 12.63   Getting requirements to build wheel: finished with status 'done'
+#11 12.63   Preparing metadata (pyproject.toml): started
+#11 13.04   Preparing metadata (pyproject.toml): finished with status 'done'
+#11 13.64 Collecting aiogram>=3.12 (from tg_bot_service==0.1.0)
+#11 14.17   Downloading aiogram-3.21.0-py3-none-any.whl.metadata (7.6 kB)
+#11 14.27 Collecting httpx>=0.27 (from tg_bot_service==0.1.0)
+#11 14.34   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+#11 14.48 Collecting fastapi>=0.110 (from http_service==0.2.0)
+#11 14.55   Downloading fastapi-0.116.1-py3-none-any.whl.metadata (28 kB)
+#11 14.69 Collecting uvicorn>=0.27 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 14.76   Downloading uvicorn-0.35.0-py3-none-any.whl.metadata (6.5 kB)
+#11 14.85 Collecting tenacity>=8.2 (from http_service==0.2.0)
+#11 14.92   Downloading tenacity-9.1.2-py3-none-any.whl.metadata (1.2 kB)
+#11 15.16 Collecting pydantic>=2.6 (from http_service==0.2.0)
+#11 15.23   Downloading pydantic-2.11.7-py3-none-any.whl.metadata (67 kB)
+#11 15.39 Collecting pydantic-settings>=2.2 (from http_service==0.2.0)
+#11 15.47   Downloading pydantic_settings-2.10.1-py3-none-any.whl.metadata (3.4 kB)
+#11 15.54 Collecting structlog>=24.1 (from http_service==0.2.0)
+#11 15.61   Downloading structlog-25.4.0-py3-none-any.whl.metadata (7.6 kB)
+#11 15.90 Collecting sqlalchemy>=2.0 (from http_service==0.2.0)
+#11 15.98   Downloading sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (9.6 kB)
+#11 16.05 Collecting psycopg>=3.2 (from psycopg[binary]>=3.2->http_service==0.2.0)
+#11 16.13   Downloading psycopg-3.2.9-py3-none-any.whl.metadata (4.5 kB)
+#11 16.21 Collecting alembic>=1.13 (from http_service==0.2.0)
+#11 16.28   Downloading alembic-1.16.4-py3-none-any.whl.metadata (7.3 kB)
+#11 16.35 Collecting aiofiles<24.2,>=23.2.1 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 16.42   Downloading aiofiles-24.1.0-py3-none-any.whl.metadata (10 kB)
+#11 16.79 Collecting aiohttp<3.13,>=3.9.0 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 16.86   Downloading aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.7 kB)
+#11 16.94 Collecting certifi>=2023.7.22 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.01   Downloading certifi-2025.8.3-py3-none-any.whl.metadata (2.4 kB)
+#11 17.09 Collecting magic-filter<1.1,>=1.0.12 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.16   Downloading magic_filter-1.0.12-py3-none-any.whl.metadata (1.5 kB)
+#11 17.25 Collecting typing-extensions<=5.0,>=4.7.0 (from aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.32   Downloading typing_extensions-4.14.1-py3-none-any.whl.metadata (3.0 kB)
+#11 17.39 Collecting aiohappyeyeballs>=2.5.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.46   Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl.metadata (5.9 kB)
+#11 17.53 Collecting aiosignal>=1.4.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.61   Downloading aiosignal-1.4.0-py3-none-any.whl.metadata (3.7 kB)
+#11 17.68 Collecting attrs>=17.3.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.75   Downloading attrs-25.3.0-py3-none-any.whl.metadata (10 kB)
+#11 17.85 Collecting frozenlist>=1.1.1 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 17.93   Downloading frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (18 kB)
+#11 18.10 Collecting multidict<7.0,>=4.5 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 18.18   Downloading multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.3 kB)
+#11 18.26 Collecting propcache>=0.2.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 18.34   Downloading propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (12 kB)
+#11 18.54 Collecting yarl<2.0,>=1.17.0 (from aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 18.62   Downloading yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (73 kB)
+#11 18.73 Collecting annotated-types>=0.6.0 (from pydantic>=2.6->http_service==0.2.0)
+#11 18.80   Downloading annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+#11 19.18 Collecting pydantic-core==2.33.2 (from pydantic>=2.6->http_service==0.2.0)
+#11 19.26   Downloading pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)
+#11 19.33 Collecting typing-inspection>=0.4.0 (from pydantic>=2.6->http_service==0.2.0)
+#11 19.40   Downloading typing_inspection-0.4.1-py3-none-any.whl.metadata (2.6 kB)
+#11 19.48 Collecting idna>=2.0 (from yarl<2.0,>=1.17.0->aiohttp<3.13,>=3.9.0->aiogram>=3.12->tg_bot_service==0.1.0)
+#11 19.55   Downloading idna-3.10-py3-none-any.whl.metadata (10 kB)
+#11 19.65 Collecting Mako (from alembic>=1.13->http_service==0.2.0)
+#11 19.72   Downloading mako-1.3.10-py3-none-any.whl.metadata (2.9 kB)
+#11 19.81 Collecting starlette<0.48.0,>=0.40.0 (from fastapi>=0.110->http_service==0.2.0)
+#11 19.88   Downloading starlette-0.47.2-py3-none-any.whl.metadata (6.2 kB)
+#11 19.98 Collecting anyio<5,>=3.6.2 (from starlette<0.48.0,>=0.40.0->fastapi>=0.110->http_service==0.2.0)
+#11 20.05   Downloading anyio-4.10.0-py3-none-any.whl.metadata (4.0 kB)
+#11 20.13 Collecting sniffio>=1.1 (from anyio<5,>=3.6.2->starlette<0.48.0,>=0.40.0->fastapi>=0.110->http_service==0.2.0)
+#11 20.20   Downloading sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+#11 20.28 Collecting httpcore==1.* (from httpx>=0.27->tg_bot_service==0.1.0)
+#11 20.35   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+#11 20.43 Collecting h11>=0.16 (from httpcore==1.*->httpx>=0.27->tg_bot_service==0.1.0)
+#11 20.50   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+#11 20.64 Collecting psycopg-binary==3.2.9 (from psycopg[binary]>=3.2->http_service==0.2.0)
+#11 20.71   Downloading psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (2.9 kB)
+#11 20.80 Collecting python-dotenv>=0.21.0 (from pydantic-settings>=2.2->http_service==0.2.0)
+#11 20.87   Downloading python_dotenv-1.1.1-py3-none-any.whl.metadata (24 kB)
+#11 21.01 Collecting greenlet>=1 (from sqlalchemy>=2.0->http_service==0.2.0)
+#11 21.08   Downloading greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (4.1 kB)
+#11 21.16 Collecting click>=7.0 (from uvicorn>=0.27->uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.23   Downloading click-8.2.1-py3-none-any.whl.metadata (2.5 kB)
+#11 21.31 Collecting httptools>=0.6.3 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.38   Downloading httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (3.6 kB)
+#11 21.47 Collecting pyyaml>=5.1 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.54   Downloading PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (2.1 kB)
+#11 21.62 Collecting uvloop>=0.15.1 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.69   Downloading uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+#11 21.82 Collecting watchfiles>=0.13 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 21.89   Downloading watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+#11 22.03 Collecting websockets>=10.4 (from uvicorn[standard]>=0.27->http_service==0.2.0)
+#11 22.10   Downloading websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)
+#11 22.20 Collecting MarkupSafe>=0.9.2 (from Mako->alembic>=1.13->http_service==0.2.0)
+#11 22.27   Downloading MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.0 kB)
+#11 22.35 Downloading aiogram-3.21.0-py3-none-any.whl (677 kB)
+#11 22.55    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 677.3/677.3 kB 5.1 MB/s  0:00:00
+#11 22.62 Downloading aiofiles-24.1.0-py3-none-any.whl (15 kB)
+#11 22.69 Downloading aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.7 MB)
+#11 22.82    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 13.2 MB/s  0:00:00
+#11 22.89 Downloading magic_filter-1.0.12-py3-none-any.whl (11 kB)
+#11 22.96 Downloading multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (256 kB)
+#11 23.04 Downloading pydantic-2.11.7-py3-none-any.whl (444 kB)
+#11 23.12 Downloading pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.0 MB)
+#11 23.93    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 2.2 MB/s  0:00:00
+#11 24.00 Downloading typing_extensions-4.14.1-py3-none-any.whl (43 kB)
+#11 24.08 Downloading yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (355 kB)
+#11 24.16 Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl (15 kB)
+#11 24.24 Downloading aiosignal-1.4.0-py3-none-any.whl (7.5 kB)
+#11 24.31 Downloading alembic-1.16.4-py3-none-any.whl (247 kB)
+#11 24.39 Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+#11 24.46 Downloading attrs-25.3.0-py3-none-any.whl (63 kB)
+#11 24.54 Downloading certifi-2025.8.3-py3-none-any.whl (161 kB)
+#11 24.62 Downloading fastapi-0.116.1-py3-none-any.whl (95 kB)
+#11 24.69 Downloading starlette-0.47.2-py3-none-any.whl (72 kB)
+#11 24.76 Downloading anyio-4.10.0-py3-none-any.whl (107 kB)
+#11 24.84 Downloading frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (241 kB)
+#11 24.92 Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+#11 25.00 Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+#11 25.07 Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+#11 25.14 Downloading idna-3.10-py3-none-any.whl (70 kB)
+#11 25.22 Downloading propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (224 kB)
+#11 25.31 Downloading psycopg-3.2.9-py3-none-any.whl (202 kB)
+#11 25.39 Downloading psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (4.4 MB)
+#11 25.59    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.4/4.4 MB 22.2 MB/s  0:00:00
+#11 25.66 Downloading pydantic_settings-2.10.1-py3-none-any.whl (45 kB)
+#11 25.73 Downloading python_dotenv-1.1.1-py3-none-any.whl (20 kB)
+#11 25.80 Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+#11 25.88 Downloading sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+#11 26.21    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 9.6 MB/s  0:00:00
+#11 26.28 Downloading greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (607 kB)
+#11 26.31    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 607.6/607.6 kB 25.4 MB/s  0:00:00
+#11 26.38 Downloading structlog-25.4.0-py3-none-any.whl (68 kB)
+#11 26.46 Downloading tenacity-9.1.2-py3-none-any.whl (28 kB)
+#11 26.53 Downloading typing_inspection-0.4.1-py3-none-any.whl (14 kB)
+#11 26.61 Downloading uvicorn-0.35.0-py3-none-any.whl (66 kB)
+#11 26.68 Downloading click-8.2.1-py3-none-any.whl (102 kB)
+#11 26.75 Downloading httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (510 kB)
+#11 26.94 Downloading PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (767 kB)
+#11 26.97    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 767.5/767.5 kB 24.2 MB/s  0:00:00
+#11 27.05 Downloading uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (4.7 MB)
+#11 27.28    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.7/4.7 MB 21.8 MB/s  0:00:00
+#11 27.35 Downloading watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (452 kB)
+#11 27.44 Downloading websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (182 kB)
+#11 27.52 Downloading mako-1.3.10-py3-none-any.whl (78 kB)
+#11 27.59 Downloading MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (23 kB)
+#11 27.62 Saved /wheels/aiogram-3.21.0-py3-none-any.whl
+#11 27.62 Saved /wheels/aiofiles-24.1.0-py3-none-any.whl
+#11 27.62 Saved /wheels/aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.63 Saved /wheels/magic_filter-1.0.12-py3-none-any.whl
+#11 27.63 Saved /wheels/multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
+#11 27.63 Saved /wheels/pydantic-2.11.7-py3-none-any.whl
+#11 27.63 Saved /wheels/pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.63 Saved /wheels/typing_extensions-4.14.1-py3-none-any.whl
+#11 27.63 Saved /wheels/yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.63 Saved /wheels/aiohappyeyeballs-2.6.1-py3-none-any.whl
+#11 27.63 Saved /wheels/aiosignal-1.4.0-py3-none-any.whl
+#11 27.63 Saved /wheels/alembic-1.16.4-py3-none-any.whl
+#11 27.63 Saved /wheels/annotated_types-0.7.0-py3-none-any.whl
+#11 27.63 Saved /wheels/attrs-25.3.0-py3-none-any.whl
+#11 27.63 Saved /wheels/certifi-2025.8.3-py3-none-any.whl
+#11 27.63 Saved /wheels/fastapi-0.116.1-py3-none-any.whl
+#11 27.63 Saved /wheels/starlette-0.47.2-py3-none-any.whl
+#11 27.63 Saved /wheels/anyio-4.10.0-py3-none-any.whl
+#11 27.63 Saved /wheels/frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.63 Saved /wheels/httpx-0.28.1-py3-none-any.whl
+#11 27.63 Saved /wheels/httpcore-1.0.9-py3-none-any.whl
+#11 27.63 Saved /wheels/h11-0.16.0-py3-none-any.whl
+#11 27.63 Saved /wheels/idna-3.10-py3-none-any.whl
+#11 27.63 Saved /wheels/propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.63 Saved /wheels/psycopg-3.2.9-py3-none-any.whl
+#11 27.63 Saved /wheels/psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.63 Saved /wheels/pydantic_settings-2.10.1-py3-none-any.whl
+#11 27.63 Saved /wheels/python_dotenv-1.1.1-py3-none-any.whl
+#11 27.63 Saved /wheels/sniffio-1.3.1-py3-none-any.whl
+#11 27.63 Saved /wheels/sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.63 Saved /wheels/greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+#11 27.63 Saved /wheels/structlog-25.4.0-py3-none-any.whl
+#11 27.63 Saved /wheels/tenacity-9.1.2-py3-none-any.whl
+#11 27.63 Saved /wheels/typing_inspection-0.4.1-py3-none-any.whl
+#11 27.63 Saved /wheels/uvicorn-0.35.0-py3-none-any.whl
+#11 27.63 Saved /wheels/click-8.2.1-py3-none-any.whl
+#11 27.63 Saved /wheels/httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.63 Saved /wheels/PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.63 Saved /wheels/uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.63 Saved /wheels/watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.63 Saved /wheels/websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.63 Saved /wheels/mako-1.3.10-py3-none-any.whl
+#11 27.63 Saved /wheels/MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#11 27.63 Building wheels for collected packages: tg_bot_service, http_service, ai_service
+#11 27.63   Building wheel for tg_bot_service (pyproject.toml): started
+#11 28.08   Building wheel for tg_bot_service (pyproject.toml): finished with status 'done'
+#11 28.08   Created wheel for tg_bot_service: filename=tg_bot_service-0.1.0-py3-none-any.whl size=5414 sha256=d5436d1365b1b4a47e69bbb38b4095fb959a2bd85e05bb60ce1f8720017309bb
+#11 28.08   Stored in directory: /tmp/pip-ephem-wheel-cache-opw9rjq6/wheels/2c/d3/10/b9d88edc85721a7ca40d90d1af0ce341bd0e3aa1c43c5efecc
+#11 28.08   Building wheel for http_service (pyproject.toml): started
+#11 28.53   Building wheel for http_service (pyproject.toml): finished with status 'done'
+#11 28.53   Created wheel for http_service: filename=http_service-0.2.0-py3-none-any.whl size=11373 sha256=225cf437e640cb94da404048e786ceed957eb0441690a5ac3d2f5b22ea116388
+#11 28.53   Stored in directory: /tmp/pip-ephem-wheel-cache-opw9rjq6/wheels/d9/54/a6/db0b000b08e9a9e6315c20f6da687cf6ec5a47fe05624c67b8
+#11 28.53   Building wheel for ai_service (pyproject.toml): started
+#11 28.97   Building wheel for ai_service (pyproject.toml): finished with status 'done'
+#11 28.97   Created wheel for ai_service: filename=ai_service-0.1.0-py3-none-any.whl size=3628 sha256=e0348e80943c5eafcb46e89ff3a9c5fb47afebc16b88fd927257c4ddd22859ef
+#11 28.97   Stored in directory: /tmp/pip-ephem-wheel-cache-opw9rjq6/wheels/f3/b1/e1/ee5a0ab2dff8de4f669561f007c12531507078b9ab242eac96
+#11 28.98 Successfully built tg_bot_service http_service ai_service
+#11 DONE 29.3s
+
+#12 [ai_service runtime 3/5] RUN useradd -m appuser
+#12 CACHED
+
+#13 [ai_service runtime 4/5] COPY --from=builder /wheels /wheels
+#13 DONE 0.1s
+
+#14 [ai_service runtime 5/5] RUN python -m pip install --no-cache-dir /wheels/*
+#14 0.795 Defaulting to user installation because normal site-packages is not writeable
+#14 0.886 Processing /wheels/MarkupSafe-3.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.888 Processing /wheels/PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.889 Processing /wheels/ai_service-0.1.0-py3-none-any.whl
+#14 0.890 Processing /wheels/aiofiles-24.1.0-py3-none-any.whl
+#14 0.890 Processing /wheels/aiogram-3.21.0-py3-none-any.whl
+#14 0.896 Processing /wheels/aiohappyeyeballs-2.6.1-py3-none-any.whl
+#14 0.897 Processing /wheels/aiohttp-3.12.15-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.899 Processing /wheels/aiosignal-1.4.0-py3-none-any.whl
+#14 0.900 Processing /wheels/alembic-1.16.4-py3-none-any.whl
+#14 0.901 Processing /wheels/annotated_types-0.7.0-py3-none-any.whl
+#14 0.902 Processing /wheels/anyio-4.10.0-py3-none-any.whl
+#14 0.903 Processing /wheels/attrs-25.3.0-py3-none-any.whl
+#14 0.907 Processing /wheels/certifi-2025.8.3-py3-none-any.whl
+#14 0.908 Processing /wheels/click-8.2.1-py3-none-any.whl
+#14 0.908 Processing /wheels/fastapi-0.116.1-py3-none-any.whl
+#14 0.911 Processing /wheels/frozenlist-1.7.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.912 Processing /wheels/greenlet-3.2.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+#14 0.914 Processing /wheels/h11-0.16.0-py3-none-any.whl
+#14 0.915 Processing /wheels/http_service-0.2.0-py3-none-any.whl
+#14 0.915 Processing /wheels/httpcore-1.0.9-py3-none-any.whl
+#14 0.917 Processing /wheels/httptools-0.6.4-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.918 Processing /wheels/httpx-0.28.1-py3-none-any.whl
+#14 0.919 Processing /wheels/idna-3.10-py3-none-any.whl
+#14 0.921 Processing /wheels/magic_filter-1.0.12-py3-none-any.whl
+#14 0.922 Processing /wheels/mako-1.3.10-py3-none-any.whl
+#14 0.923 Processing /wheels/multidict-6.6.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
+#14 0.923 Processing /wheels/propcache-0.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.924 Processing /wheels/psycopg-3.2.9-py3-none-any.whl
+#14 0.927 Processing /wheels/psycopg_binary-3.2.9-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.931 Processing /wheels/pydantic-2.11.7-py3-none-any.whl
+#14 0.933 Processing /wheels/pydantic_core-2.33.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.935 Processing /wheels/pydantic_settings-2.10.1-py3-none-any.whl
+#14 0.936 Processing /wheels/python_dotenv-1.1.1-py3-none-any.whl
+#14 0.937 Processing /wheels/sniffio-1.3.1-py3-none-any.whl
+#14 0.938 Processing /wheels/sqlalchemy-2.0.43-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.945 Processing /wheels/starlette-0.47.2-py3-none-any.whl
+#14 0.946 Processing /wheels/structlog-25.4.0-py3-none-any.whl
+#14 0.947 Processing /wheels/tenacity-9.1.2-py3-none-any.whl
+#14 0.948 Processing /wheels/tg_bot_service-0.1.0-py3-none-any.whl
+#14 0.948 Processing /wheels/typing_extensions-4.14.1-py3-none-any.whl
+#14 0.949 Processing /wheels/typing_inspection-0.4.1-py3-none-any.whl
+#14 0.950 Processing /wheels/uvicorn-0.35.0-py3-none-any.whl
+#14 0.951 Processing /wheels/uvloop-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.955 Processing /wheels/watchfiles-1.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.956 Processing /wheels/websockets-15.0.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 0.957 Processing /wheels/yarl-1.20.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#14 1.029 Installing collected packages: websockets, uvloop, typing-extensions, tenacity, structlog, sniffio, PyYAML, python-dotenv, psycopg-binary, propcache, multidict, MarkupSafe, magic-filter, idna, httptools, h11, greenlet, frozenlist, click, certifi, attrs, annotated-types, aiohappyeyeballs, aiofiles, yarl, uvicorn, typing-inspection, sqlalchemy, pydantic-core, psycopg, mako, httpcore, anyio, aiosignal, watchfiles, starlette, pydantic, httpx, alembic, aiohttp, pydantic-settings, fastapi, aiogram, tg-bot-service, http-service, ai-service
+#14 1.087   WARNING: The script websockets is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 1.087   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 1.364   WARNING: The script dotenv is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 1.364   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 2.006   WARNING: The script uvicorn is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 2.006   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 2.828   WARNING: The script mako-render is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 2.828   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 3.002   WARNING: The script watchfiles is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 3.002   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 3.271   WARNING: The script httpx is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 3.271   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 3.376   WARNING: The script alembic is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 3.376   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 3.599   WARNING: The script fastapi is installed in '/home/appuser/.local/bin' which is not on PATH.
+#14 3.599   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+#14 3.917 Successfully installed MarkupSafe-3.0.2 PyYAML-6.0.2 ai-service-0.1.0 aiofiles-24.1.0 aiogram-3.21.0 aiohappyeyeballs-2.6.1 aiohttp-3.12.15 aiosignal-1.4.0 alembic-1.16.4 annotated-types-0.7.0 anyio-4.10.0 attrs-25.3.0 certifi-2025.8.3 click-8.2.1 fastapi-0.116.1 frozenlist-1.7.0 greenlet-3.2.4 h11-0.16.0 http-service-0.2.0 httpcore-1.0.9 httptools-0.6.4 httpx-0.28.1 idna-3.10 magic-filter-1.0.12 mako-1.3.10 multidict-6.6.4 propcache-0.3.2 psycopg-3.2.9 psycopg-binary-3.2.9 pydantic-2.11.7 pydantic-core-2.33.2 pydantic-settings-2.10.1 python-dotenv-1.1.1 sniffio-1.3.1 sqlalchemy-2.0.43 starlette-0.47.2 structlog-25.4.0 tenacity-9.1.2 tg-bot-service-0.1.0 typing-extensions-4.14.1 typing-inspection-0.4.1 uvicorn-0.35.0 uvloop-0.21.0 watchfiles-1.1.0 websockets-15.0.1 yarl-1.20.1
+#14 4.529 
+#14 4.529 [notice] A new release of pip is available: 25.0.1 -> 25.2
+#14 4.529 [notice] To update, run: pip install --upgrade pip
+#14 DONE 4.6s
+
+#15 [ai_service] exporting to image
+#15 exporting layers
+#15 exporting layers 0.3s done
+#15 writing image sha256:8b756758d2279a86a933aa82f970dfeede7af4e355a4bada13b8fdeb19b51c11 done
+#15 naming to docker.io/library/http-ai_service 0.0s done
+#15 DONE 0.3s
+
+#16 [ai_service] resolving provenance for metadata file
+#16 DONE 0.0s
+$ docker compose up -d ai_service
+ Container http_service_pg  Running
+ Container ollama  Running
+ Container ai_service_app  Recreate
+ Container ai_service_app  Recreated
+ Container ai_service_app  Starting
+ Container ai_service_app  Started
+$ curl -sS http://localhost:8010/health | cat
+$ curl -sS http://localhost:8010/generate -H 'Content-Type: application/json' -d '{"text":"привет кто ты?"}' | cat
+
+--- ai_service logs (last 200)
+ai_service_app  | INFO:     Started server process [1]
+ai_service_app  | INFO:     Waiting for application startup.
+ai_service_app  | ERROR:    Traceback (most recent call last):
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+ai_service_app  |     self._dbapi_connection = engine.raw_connection()
+ai_service_app  |                              ^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3301, in raw_connection
+ai_service_app  |     return self.pool.connect()
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+ai_service_app  |     return _ConnectionFairy._checkout(self)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+ai_service_app  |     fairy = _ConnectionRecord.checkout(pool)
+ai_service_app  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+ai_service_app  |     rec = pool._do_get()
+ai_service_app  |           ^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+ai_service_app  |     with util.safe_reraise():
+ai_service_app  |          ^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+ai_service_app  |     raise exc_value.with_traceback(exc_tb)
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+ai_service_app  |     return self._create_connection()
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+ai_service_app  |     return _ConnectionRecord(self)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+ai_service_app  |     self.__connect()
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+ai_service_app  |     with util.safe_reraise():
+ai_service_app  |          ^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+ai_service_app  |     raise exc_value.with_traceback(exc_tb)
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+ai_service_app  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+ai_service_app  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+ai_service_app  |     return dialect.connect(*cargs, **cparams)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 629, in connect
+ai_service_app  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg.py", line 733, in connect
+ai_service_app  |     await_only(creator_fn(*arg, **kw))
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+ai_service_app  |     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+ai_service_app  |     value = await result
+ai_service_app  |             ^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/psycopg/connection_async.py", line 136, in connect
+ai_service_app  |     raise last_ex.with_traceback(None)
+ai_service_app  | psycopg.OperationalError: connection failed: connection to server at "172.28.0.2", port 5432 failed: FATAL:  database "ai_service" does not exist
+ai_service_app  | 
+ai_service_app  | The above exception was the direct cause of the following exception:
+ai_service_app  | 
+ai_service_app  | Traceback (most recent call last):
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/starlette/routing.py", line 694, in lifespan
+ai_service_app  |     async with self.lifespan_context(app) as maybe_state:
+ai_service_app  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/starlette/routing.py", line 571, in __aenter__
+ai_service_app  |     await self._router.startup()
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/starlette/routing.py", line 671, in startup
+ai_service_app  |     await handler()
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/ai_service/main.py", line 31, in _startup
+ai_service_app  |     await init_models(_engine)
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/ai_service/db.py", line 45, in init_models
+ai_service_app  |     async with engine.begin() as conn:
+ai_service_app  |                ^^^^^^^^^^^^^^
+ai_service_app  |   File "/usr/local/lib/python3.12/contextlib.py", line 210, in __aenter__
+ai_service_app  |     return await anext(self.gen)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/engine.py", line 1066, in begin
+ai_service_app  |     async with conn:
+ai_service_app  |                ^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/base.py", line 121, in __aenter__
+ai_service_app  |     return await self.start(is_ctxmanager=True)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/engine.py", line 274, in start
+ai_service_app  |     await greenlet_spawn(self.sync_engine.connect)
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+ai_service_app  |     result = context.throw(*sys.exc_info())
+ai_service_app  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3277, in connect
+ai_service_app  |     return self._connection_cls(self)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+ai_service_app  |     Connection._handle_dbapi_exception_noconnection(
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2440, in _handle_dbapi_exception_noconnection
+ai_service_app  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+ai_service_app  |     self._dbapi_connection = engine.raw_connection()
+ai_service_app  |                              ^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3301, in raw_connection
+ai_service_app  |     return self.pool.connect()
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+ai_service_app  |     return _ConnectionFairy._checkout(self)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+ai_service_app  |     fairy = _ConnectionRecord.checkout(pool)
+ai_service_app  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+ai_service_app  |     rec = pool._do_get()
+ai_service_app  |           ^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+ai_service_app  |     with util.safe_reraise():
+ai_service_app  |          ^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+ai_service_app  |     raise exc_value.with_traceback(exc_tb)
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+ai_service_app  |     return self._create_connection()
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+ai_service_app  |     return _ConnectionRecord(self)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+ai_service_app  |     self.__connect()
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+ai_service_app  |     with util.safe_reraise():
+ai_service_app  |          ^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+ai_service_app  |     raise exc_value.with_traceback(exc_tb)
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+ai_service_app  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+ai_service_app  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+ai_service_app  |     return dialect.connect(*cargs, **cparams)
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 629, in connect
+ai_service_app  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg.py", line 733, in connect
+ai_service_app  |     await_only(creator_fn(*arg, **kw))
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+ai_service_app  |     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+ai_service_app  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+ai_service_app  |     value = await result
+ai_service_app  |             ^^^^^^^^^^^^
+ai_service_app  |   File "/home/appuser/.local/lib/python3.12/site-packages/psycopg/connection_async.py", line 136, in connect
+ai_service_app  |     raise last_ex.with_traceback(None)
+ai_service_app  | sqlalchemy.exc.OperationalError: (psycopg.OperationalError) connection failed: connection to server at "172.28.0.2", port 5432 failed: FATAL:  database "ai_service" does not exist
+ai_service_app  | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+ai_service_app  | 
+ai_service_app  | ERROR:    Application startup failed. Exiting.
+
+--- try ollama generate from host
+{"model":"mistral","created_at":"2025-08-14T21:04:46.280396987Z","response":" Здравствуйте! Я – помощник AI, созданный для обучения и общения. Как вас приветствовал! Как дела? Меня зовут IamAI и я с радостью готов помочь тебе в решении вопросов по любым темам,
+
+--- retry ai_service /health after 5s
+
+--- retry /generate
+
+---
+$ git add -A

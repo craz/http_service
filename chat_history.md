@@ -182,3 +182,27 @@ git commit -m "docs: add PRODUCT_REQUIREMENTS with User Stories, Use Cases, epic
 git add PRODUCT_REQUIREMENTS.md CHANGELOG.md chat_history.md
 git commit -m "docs: restore PRODUCT_REQUIREMENTS.md and update changelog"
 ```
+
+---
+$ git status
+Текущая ветка: main
+Ваша ветка опережает «origin/main» на 1 коммит.
+  (используйте «git push», чтобы опубликовать ваши локальные коммиты)
+
+Изменения, которые не в индексе для коммита:
+  (используйте «git add <файл>...», чтобы добавить файл в индекс)
+  (используйте «git restore <файл>...», чтобы отменить изменения в рабочем каталоге)
+	изменено:      chat_history.md
+	изменено:      pgadmin/servers.json
+
+Неотслеживаемые файлы:
+  (используйте «git add <файл>...», чтобы добавить в то, что будет включено в коммит)
+	typings/alembic/
+
+индекс пуст (используйте «git add» и/или «git commit -a»)
+
+---
+$ git restore --source=HEAD -- pgadmin/servers.json
+
+---
+$ git add -A

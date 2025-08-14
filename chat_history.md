@@ -10149,4 +10149,21 @@ branch 'feat/ai-service' set up to track 'origin/feat/ai-service'.
 
 --- identify admin-copy commit hashCOMMIT_ADMIN=0cb4a1640dedd6ee9c8de4d73b3bb51b892aba87
 
---- commit chat_history before branching
+--- commit chat_history before branching[feat/ai-service b018275] chore(history): журнал перед переносом админки в отдельную ветку
+ 1 file changed, 2234 insertions(+), 1 deletion(-)
+
+--- switch to main & pullУже актуально.
+
+--- create branch feat/adm-copy-internal from main
+--- cherry-pick admin-copy commit onto feat/adm-copy-internal
+--- push new branchbranch 'feat/adm-copy-internal' set up to track 'origin/feat/adm-copy-internal'.
+
+--- switch back to feat/ai-serviceM	chat_history.md
+Ваша ветка опережает «origin/feat/ai-service» на 1 коммит.
+  (используйте «git push», чтобы опубликовать ваши локальные коммиты)
+
+--- revert admin-copy commit on feat/ai-service
+--- push feat/ai-service after revertCOMMIT_ADMIN=0cb4a1640dedd6ee9c8de4d73b3bb51b892aba87
+
+--- step: prepare feat/adm-copy-internal for cherry-pickM	chat_history.md
+Эта ветка соответствует «origin/feat/adm-copy-internal».

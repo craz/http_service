@@ -1,6 +1,6 @@
 SHELL := /usr/bin/bash
 
-.PHONY: up down logs logs-once ngrok-up ngrok-url ping ping-remote db-shell ps restart bot-up bot-logs bot-restart bot-down alembic-init alembic-rev alembic-upgrade alembic-downgrade migrate
+.PHONY: up down logs logs-once ngrok-up ngrok-url ping ping-remote db-shell ps restart bot-up bot-logs bot-restart bot-down alembic-init alembic-rev alembic-upgrade alembic-downgrade alembic-stamp-head migrate
 
 up:
 	docker compose --env-file .env up -d
@@ -70,4 +70,7 @@ alembic-downgrade:
 	@cd services/http_service && ALEMBIC_CONFIG=alembic.ini alembic downgrade -1
 
 migrate: alembic-rev alembic-upgrade
+
+alembic-stamp-head:
+	@cd services/http_service && ALEMBIC_CONFIG=alembic.ini alembic stamp head
 

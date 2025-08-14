@@ -206,3 +206,13 @@ $ git restore --source=HEAD -- pgadmin/servers.json
 
 ---
 $ git add -A
+$ git commit -m 'chore(history): append session logs and clean pgadmin state'
+[main cb01104] chore(history): append session logs and clean pgadmin state
+ 2 files changed, 41 insertions(+)
+ create mode 100644 typings/alembic/__init__.pyi
+$ git pull --rebase origin main
+error: не удалось выполнить получение с перемещением: У вас есть непроиндексированные изменения.
+error: Сделайте коммит или спрячьте их.
+
+---
+$ git add -A

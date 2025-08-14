@@ -10167,3 +10167,10 @@ branch 'feat/ai-service' set up to track 'origin/feat/ai-service'.
 
 --- step: prepare feat/adm-copy-internal for cherry-pickM	chat_history.md
 Эта ветка соответствует «origin/feat/adm-copy-internal».
+[feat/adm-copy-internal 67732ec] chore(history): журнал перед cherry-pick админки
+ 1 file changed, 18 insertions(+), 1 deletion(-)
+
+--- step: cherry-pick admin copy commit
+--- step: push feat/adm-copy-internalbranch 'feat/adm-copy-internal' set up to track 'origin/feat/adm-copy-internal'.
+
+--- step: revert on feat/ai-service

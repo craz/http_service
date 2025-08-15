@@ -1,4 +1,5 @@
 {
+  "uid": "bev0mh4gm1zi8b",
   "annotations": {"list": []},
   "editable": true,
   "fiscalYearStartMonth": 0,
@@ -125,7 +126,7 @@
     {
       "type": "logs",
       "title": "TG Bot Q/A",
-      "gridPos": {"x": 0, "y": 58, "w": 24, "h": 12},
+      "gridPos": {"x": 0, "y": 64, "w": 24, "h": 12},
       "options": {"showLabels": true, "showTime": true, "wrapLogMessage": true},
       "targets": [
         {

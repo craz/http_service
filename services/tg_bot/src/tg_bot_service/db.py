@@ -252,7 +252,7 @@ async def upsert_user_profile(session: AsyncSession, message: "Message") -> None
     await session.commit()
 
 
-async def save_incoming_message(session: AsyncSession, message: "Message") -> None:
+async def save_incoming_message(session: AsyncSession, message: "Message") -> int:
     from .db import IncomingMessage  # local import to avoid circular
     chat_id = message.chat.id if message.chat else 0
     user_id = message.from_user.id if message.from_user else None
@@ -270,13 +270,17 @@ async def save_incoming_message(session: AsyncSession, message: "Message") -> No
     )
     session.add(msg)
     await session.commit()
+    await session.refresh(msg)
+    return int(msg.id)
 
 
-async def save_outgoing_message(session: AsyncSession, chat_id: int, user_id: int | None, text: str) -> None:
+async def save_outgoing_message(session: AsyncSession, chat_id: int, user_id: int | None, text: str) -> int:
     from .db import OutgoingMessage
     msg = OutgoingMessage(chat_id=chat_id, user_id=user_id, text=text)
     session.add(msg)
     await session.commit()
+    await session.refresh(msg)
+    return int(msg.id)
 
 
 async def get_ai_system_prompt(session: AsyncSession) -> str | None:

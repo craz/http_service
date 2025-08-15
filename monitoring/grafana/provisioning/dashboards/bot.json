@@ -1,0 +1,30 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "type": "table",
+      "title": "Последние сообщения бота",
+      "gridPos": {"x": 0, "y": 0, "w": 24, "h": 10},
+      "targets": [
+        {
+          "datasource": {"type": "loki", "uid": "Loki"},
+          "expr": "{service=\"tg_bot\"} |= \"bot.reply\"",
+          "refId": "A"
+        }
+      ],
+      "options": {"showHeader": true}
+    }
+  ],
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["bot"],
+  "time": {"from": "now-6h", "to": "now"},
+  "timezone": "browser",
+  "title": "Bot Replies",
+  "version": 1
+}
+
+

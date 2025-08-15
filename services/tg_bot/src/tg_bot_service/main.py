@@ -24,6 +24,13 @@ from .db import (
 _session_factory = None
 
 
+def _log_kv(event: str, **fields: object) -> None:
+    try:
+        kv = " ".join(f"{k}={repr(v)}" for k, v in fields.items())
+        print(f"{event} {kv}")
+    except Exception:
+        pass
+
 def _humanize_reply_text(text: str) -> str:
     # Убираем роботизированные самоописания
     src = text or ""
@@ -125,7 +132,7 @@ async def _echo(message: Message) -> None:
         async with session_factory() as session:
             # сохраняем профиль пользователя и входящее сообщение
             await upsert_user_profile(session, message)
-            await save_incoming_message(session, message)
+            inc_id = await save_incoming_message(session, message)
             user_id = message.from_user.id if message.from_user else 0
             # Обработка голосовых: пока не поддерживаем распознавание речи
             if getattr(message, "voice", None) is not None:
@@ -143,7 +150,8 @@ async def _echo(message: Message) -> None:
                 intent_answer = await find_intent_answer(session, message.text)
                 if intent_answer:
                     await message.answer(intent_answer)
-                    await save_outgoing_message(session, message.chat.id if message.chat else 0, user_id, intent_answer)
+                    out_id = await save_outgoing_message(session, message.chat.id if message.chat else 0, user_id, intent_answer)
+                    _log_kv("bot.reply", text=intent_answer, chat_id=message.chat.id if message.chat else 0, user_id=user_id, incoming_id=inc_id, outgoing_id=out_id, via="intent")
                 else:
                     # Если интентов нет — зовём ИИ с системным промптом
                     system_prompt = await get_ai_system_prompt(session)
@@ -156,18 +164,20 @@ async def _echo(message: Message) -> None:
                     if ai_reply:
                         ai_reply_human = _humanize_reply_text(ai_reply)
                         await message.answer(ai_reply_human)
-                        await save_outgoing_message(session, message.chat.id if message.chat else 0, user_id, ai_reply_human)
+                        out_id = await save_outgoing_message(session, message.chat.id if message.chat else 0, user_id, ai_reply_human)
+                        _log_kv("bot.reply", text=ai_reply_human, chat_id=message.chat.id if message.chat else 0, user_id=user_id, incoming_id=inc_id, outgoing_id=out_id, via="ai")
                     else:
                         # Резервный ответ при недоступности ИИ или ошибке
                         # Формулируем более «человечный» фолбэк в стиле менеджера
                         fallback_text = "Приняли ваш запрос — вернусь с ответом чуть позже. Если важно срочно, напишите, пожалуйста, что именно нужно закрыть сейчас."
                         await message.answer(fallback_text)
-                        await save_outgoing_message(
+                        out_id = await save_outgoing_message(
                             session,
                             message.chat.id if message.chat else 0,
                             user_id,
                             fallback_text,
                         )
+                        _log_kv("bot.reply", text=fallback_text, chat_id=message.chat.id if message.chat else 0, user_id=user_id, incoming_id=inc_id, outgoing_id=out_id, via="fallback")
     except Exception:
         # Не срываем UX при ошибках БД
         pass

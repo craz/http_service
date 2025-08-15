@@ -47,9 +47,6 @@ def _humanize_reply_text(text: str) -> str:
     src = re.sub(r"\n{2,}", "\n", src)
     src = re.sub(r"\s{2,}", " ", src)
 
-    # Без канцелярита‑извинений по умолчанию
-    src = src.replace("Извините, ", "")
-
     # Не ограничиваем длину ответа — возвращаем полностью, только слегка нормализованный
     return src.strip()
 
@@ -103,78 +100,7 @@ async def _filter_disclaimers_with_rules(text: str) -> str:
     return " ".join(kept).strip()
 
 
-def _detect_letter_from_request(user_text: str | None) -> str | None:
-    if not user_text:
-        return None
-    s = user_text.strip().lower()
-    import re as _re
-    m = _re.search(r"на\s+([а-яa-z])", s)
-    if m:
-        return m.group(1)
-    return None
-
-
-def _maybe_correction_reply(user_text: str | None) -> str | None:
-    if not user_text:
-        return None
-    s = (user_text or "").lower()
-    import re as _re
-    # Частный случай: поправка по Швейцарии
-    if ("швейцар" in s) and (_re.search(r"не\s+на\s+с", s) or _re.search(r"на\s+ш", s)):
-        corrected = [
-            "Сербия (Serbia)",
-            "Словакия (Slovakia)",
-            "Сирия (Syria)",
-            "Словения (Slovenia)",
-            "Судан (Sudan)",
-        ]
-        return "Вы правы: «Швейцария» начинается на «Ш». Обновлённый список на «С»:\n" + "\n".join(corrected)
-    # Общая поправка по букве
-    if _re.search(r"не\s+на\s+([а-яa-z])", s):
-        letter = _detect_letter_from_request(user_text) or "с"
-        if letter == "с":
-            corrected = [
-                "Сербия (Serbia)",
-                "Словакия (Slovakia)",
-                "Сирия (Syria)",
-                "Словения (Slovenia)",
-                "Судан (Sudan)",
-            ]
-            return "Понял, исправляюсь. Список стран на «С»:\n" + "\n".join(corrected)
-    return None
-
-
-def _enforce_letter_filter_if_asked(user_text: str | None, reply_text: str) -> str:
-    # Если в запросе указана буква ("на А" / "на с" / и т. п.) — оставим только строки, начинающиеся на эту букву
-    import re as _re
-    if not user_text:
-        return reply_text
-    letter = _detect_letter_from_request(user_text)
-    if not letter:
-        return reply_text
-    # Поддержим сочетания латиница/кириллица для похожих букв
-    l = letter.lower()
-    candidates = {l, l.upper()}
-    # визуально похожие пары латиница->кириллица
-    similar_map = {
-        "a": "а", "c": "с", "e": "е", "o": "о", "p": "р", "x": "х", "y": "у", "k": "к", "m": "м", "t": "т", "b": "в", "h": "н",
-    }
-    if l in similar_map:
-        cyr = similar_map[l]
-        candidates.update({cyr, cyr.upper()})
-    lines = reply_text.splitlines()
-    if len(lines) <= 1:
-        return reply_text
-    filtered: list[str] = []
-    for ln in lines:
-        stripped = ln.lstrip("-• 0123456789.).")
-        if not stripped:
-            continue
-        first = stripped[0]
-        if first in candidates:
-            filtered.append(ln)
-    # Если ничего не подошло — вернём исходное, чтобы не потерять ответ
-    return "\n".join(filtered) if filtered else reply_text
+ 
 
 async def _on_start(message: Message) -> None:
     # Приветствие при /start — отправляем и сохраняем в БД бота
@@ -222,14 +148,6 @@ async def _echo(message: Message) -> None:
                 await message.answer(greet_text, reply_markup=kb)
                 await mark_greeted(session, user_id=user_id)
 
-            # Попробуем среагировать на возможную поправку пользователя
-            correction = _maybe_correction_reply(message.text)
-            if correction:
-                await message.answer(correction)
-                out_id = await save_outgoing_message(session, message.chat.id if message.chat else 0, user_id, correction)
-                _log_kv("bot.reply", text=correction, chat_id=message.chat.id if message.chat else 0, user_id=user_id, incoming_id=inc_id, outgoing_id=out_id, via="correction")
-                return
-
             # Дальше всегда пробуем ответить по сути сообщения
             intent_answer = await find_intent_answer(session, message.text)
             if intent_answer:
@@ -250,8 +168,6 @@ async def _echo(message: Message) -> None:
                     filtered = await _filter_disclaimers_with_rules(ai_reply)
                     if not filtered.strip():
                         filtered = ai_reply
-                    # Сузим список, если пользователь явно просил букву
-                    filtered = _enforce_letter_filter_if_asked(message.text, filtered)
                     ai_reply_human = _humanize_reply_text(filtered)
                     await message.answer(ai_reply_human)
                     out_id = await save_outgoing_message(session, message.chat.id if message.chat else 0, user_id, ai_reply_human)

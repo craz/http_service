@@ -35,6 +35,16 @@ class AiMessage(Base):
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class AiSettings(Base):
+    __tablename__ = "ai_settings"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    model: Mapped[str] = mapped_column(Text, default="mistral")
+    ollama_base_url: Mapped[str] = mapped_column(Text, default="http://ollama:11434")
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 def make_engine() -> AsyncEngine:
     url = os.getenv("AI_DATABASE_URL", "postgresql+psycopg://postgres:postgres@postgres:5432/ai_service")
     if url.startswith("postgresql://"):
@@ -46,6 +56,14 @@ def make_engine() -> AsyncEngine:
 async def init_models(engine: AsyncEngine) -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # гарантируем наличие строки настроек (id=1)
+        await conn.exec_driver_sql(
+            """
+            INSERT INTO ai_settings (id, model, ollama_base_url)
+            VALUES (1, 'mistral', 'http://ollama:11434')
+            ON CONFLICT (id) DO NOTHING
+            """
+        )
 
 
 def make_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
@@ -84,5 +102,19 @@ def _ensure_database_exists(url: str) -> None:
     except Exception:
         # В контейнере без прав — просто продолжаем; создание таблиц упадёт явно
         pass
+
+
+async def get_settings(session: AsyncSession) -> tuple[str, str]:
+    """Возвращает (ollama_base_url, model) из БД (таблица ai_settings, id=1)."""
+    from sqlalchemy import select
+    result = await session.execute(select(AiSettings.ollama_base_url, AiSettings.model).where(AiSettings.id == 1))
+    row = result.first()
+    if row is None:
+        # На случай гонки до init_models — создадим с дефолтами
+        settings = AiSettings(id=1)
+        session.add(settings)
+        await session.flush()
+        return (settings.ollama_base_url, settings.model)
+    return (row[0], row[1])
 
 

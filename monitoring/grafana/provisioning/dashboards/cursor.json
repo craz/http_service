@@ -124,6 +124,19 @@
     },
     {
       "type": "logs",
+      "title": "TG Bot Q/A",
+      "gridPos": {"x": 0, "y": 58, "w": 24, "h": 12},
+      "options": {"showLabels": true, "showTime": true, "wrapLogMessage": true},
+      "targets": [
+        {
+          "expr": "{service=\"tg_bot\"} |~ \"bot\\.(question|reply)\"",
+          "refId": "A",
+          "datasource": {"type": "loki", "uid": "loki"}
+        }
+      ]
+    },
+    {
+      "type": "logs",
       "title": "AI Service DB/Startup Issues",
       "gridPos": {"x": 0, "y": 42, "w": 12, "h": 8},
       "options": {"showLabels": true, "showTime": true, "wrapLogMessage": true},

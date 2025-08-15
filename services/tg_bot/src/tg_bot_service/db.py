@@ -87,6 +87,17 @@ class Intent(Base):
     updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class DisclaimerRule(Base):
+    __tablename__ = "disclaimer_rule"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    pattern: Mapped[str] = mapped_column(Text)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+    priority: Mapped[int] = mapped_column(Integer, default=0, index=True)
+    created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 def _ensure_database_exists(target_url: URL) -> None:
     admin_url = target_url.set(database="postgres")
     # psycopg ожидает драйвер postgresql, удалим +psycopg из схемы
@@ -141,11 +152,11 @@ async def init_db() -> async_sessionmaker[AsyncSession]:
             # заполнить/актуализировать системный промпт (персона бота)
             await conn.execute(text(
                 """
-                -- Новый промпт: имитация обычного менеджера по продажам
+                -- Установить нейтральный промпт без самопрезентаций/дисклеймеров
                 DO $$
                 DECLARE
-                    prev_default TEXT := 'Ты — дружелюбный ассистент проекта. Отвечай кратко, по-русски, учитывая домен проекта. Если вопрос про самого бота (кто ты/что ты/чем можешь помочь), отвечай как помощник для отладки сервисов.';
-                    new_default  TEXT := 'Ты — обычный российский менеджер по продажам (человек), вежливый, дружелюбный, краткий. Пиши живым, разговорным языком, без оговорок вроде «как ИИ/нейросеть/модель». Не давай сухих списков — лучше 1–2 коротких абзаца и конкретное предложение/следующий шаг. Если спрашивают про цвета/коды/технические детали — сначала по‑человечески уточни задачу и предложи помощь; коды давай только по прямому запросу. Всегда отвечай по‑русски. Если тема не по делу — мягко верни к продукту и ценности.';
+                    prev_default TEXT := 'Ты — обычный российский менеджер по продажам (человек), вежливый, дружелюбный, краткий. Пиши живым, разговорным языком, без оговорок вроде «как ИИ/нейросеть/модель». Не давай сухих списков — лучше 1–2 коротких абзаца и конкретное предложение/следующий шаг. Если спрашивают про цвета/коды/технические детали — сначала по‑человечески уточни задачу и предложи помощь; коды давай только по прямому запросу. Всегда отвечай по‑русски. Если тема не по делу — мягко верни к продукту и ценности.';
+                    new_default  TEXT := 'Ты — дружелюбный ассистент проекта. Отвечай кратко и по делу, по‑русски. Не пиши самопрезентации и дисклеймеры (например, про отсутствие сознания/эмоций, что ты бот/модель/ИИ, для чего ты предназначен, и т. п.). Если просят список — просто дай список без вступлений.';
                 BEGIN
                     -- 1) если пусто — ставим новый промпт
                     UPDATE bot_settings
@@ -317,5 +328,14 @@ async def find_intent_answer(session: AsyncSession, text_value: str | None) -> s
         except Exception:
             continue
     return None
+
+
+async def get_disclaimer_patterns(session: AsyncSession) -> list[str]:
+    from sqlalchemy import select
+    from .db import DisclaimerRule
+    res = await session.execute(
+        select(DisclaimerRule.pattern).where(DisclaimerRule.enabled == True).order_by(DisclaimerRule.priority.desc())
+    )
+    return [row[0] for row in res.fetchall()]
 
 

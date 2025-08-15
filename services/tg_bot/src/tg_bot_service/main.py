@@ -134,6 +134,8 @@ async def _echo(message: Message) -> None:
             await upsert_user_profile(session, message)
             inc_id = await save_incoming_message(session, message)
             user_id = message.from_user.id if message.from_user else 0
+            # Логируем вопрос пользователя в stdout для Loki (Promtail)
+            _log_kv("bot.question", text=message.text or "", chat_id=message.chat.id if message.chat else 0, user_id=user_id, incoming_id=inc_id)
             # Обработка голосовых: пока не поддерживаем распознавание речи
             if getattr(message, "voice", None) is not None:
                 info_text = "Пока не умею распознавать голосовые. Пришлите текст."

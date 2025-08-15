@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .db import make_engine, init_models, make_session_factory, session_scope
+from .db import make_engine, init_models, make_session_factory, session_scope, get_settings
 import os
 import httpx
 import logging
@@ -49,8 +49,9 @@ async def generate(req: GenerateRequest) -> GenerateResponse:
 
 
 async def _generate_with_ollama(prompt: str, system: str | None = None) -> str:
-    base_url = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
-    model = os.getenv("AI_MODEL", "mistral")
+    # Настройки читаем из БД, а не из кода/ENV
+    async with session_scope(_session_factory) as session:
+        base_url, model = await get_settings(session)
     url = f"{base_url}/api/generate"
     payload = {"model": model, "prompt": prompt, "stream": False}
     if system:
@@ -79,7 +80,9 @@ async def _generate_with_ollama(prompt: str, system: str | None = None) -> str:
 
 @app.get("/health")
 async def health() -> dict:
-    base_url = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
+    # читаем настройки из БД
+    async with session_scope(_session_factory) as session:
+        base_url, _ = await get_settings(session)
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
             r = await client.get(f"{base_url}/api/tags")

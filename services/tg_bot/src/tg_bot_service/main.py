@@ -248,6 +248,23 @@ async def run_async() -> None:
         await bot.set_my_commands(commands)
     except Exception:
         pass
+    # Параллельно поднимем админский API на встроенном Uvicorn
+    from .admin_api import create_app
+    import uvicorn
+    admin_app = create_app()
+
+    admin_host = os.getenv("ADMIN_API_HOST", "0.0.0.0")
+    admin_port = int(os.getenv("ADMIN_API_PORT", "8070"))
+
+    # Запустим uvicorn в фоне (в том же процессe)
+    import threading
+
+    def _run_admin():
+        uvicorn.run(admin_app, host=admin_host, port=admin_port, log_level="info")
+
+    t = threading.Thread(target=_run_admin, daemon=True)
+    t.start()
+
     await dp.start_polling(bot)
 
 

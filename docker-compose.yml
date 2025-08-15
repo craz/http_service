@@ -85,11 +85,16 @@ services:
       - TG_BOT_TOKEN=${TG_BOT_TOKEN}
       - HTTP_SERVICE_BASE_URL=http://http_service_app:8000
       - TG_BOT_DATABASE_URL=${TG_BOT_DATABASE_URL:-postgresql+psycopg://postgres:postgres@postgres:5432/tg_bot}
+      - ADMIN_API_HOST=0.0.0.0
+      - ADMIN_API_PORT=8070
+      - ADMIN_API_TOKEN=${ADMIN_API_TOKEN:-}
     depends_on:
       - app
       - postgres
     networks:
       - default
+    ports:
+      - "8070:8070"
 
   ai_service:
     build: .

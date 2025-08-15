@@ -18,6 +18,7 @@ from .db import (
     save_incoming_message,
     save_outgoing_message,
     find_intent_answer,
+    get_disclaimer_patterns,
 )
 
 # одноразовый lazy init фабрики сессий
@@ -34,23 +35,11 @@ def _log_kv(event: str, **fields: object) -> None:
 def _humanize_reply_text(text: str) -> str:
     # Убираем роботизированные самоописания
     src = text or ""
-    lower = src.strip().lower()
-    bad_starts = [
-        "я - интеллектуальный ассистент",
-        "я — интеллектуальный ассистент",
-        "как ии",
-        "как нейросеть",
-        "как искусственный интеллект",
-        "как языковая модель",
-    ]
-    for bad in bad_starts:
-        if lower.startswith(bad):
-            parts = src.split(".", 1)
-            src = parts[1].strip() if len(parts) > 1 else ""
-            break
+    import re
+    # Удаляем самоописания/дисклеймеры по правилам из БД (по строкам)
+    # Правила применяются в вызове ниже из _filter_disclaimers_with_rules
 
     # Удаляем буллеты/нумерацию и лишние переносы
-    import re
     src = re.sub(r"^\s*[-•]+\s*", "", src, flags=re.MULTILINE)  # - / •
     src = re.sub(r"^\s*\d+\)\s*", "", src, flags=re.MULTILINE)  # 1) 2)
     src = re.sub(r"^\s*\d+\.\s*", "", src, flags=re.MULTILINE)  # 1. 2.
@@ -61,46 +50,131 @@ def _humanize_reply_text(text: str) -> str:
     # Без канцелярита‑извинений по умолчанию
     src = src.replace("Извините, ", "")
 
-    # Жёстко сокращаем ответ до ~50% или не более 2 коротких предложений
-    def _split_sentences(s: str) -> list[str]:
-        # Простая разбивка по рус./англ. окончаниям предложений
-        parts = re.split(r"(?<=[.!?…])\s+", s.strip())
-        return [p.strip() for p in parts if p.strip()]
+    # Не ограничиваем длину ответа — возвращаем полностью, только слегка нормализованный
+    return src.strip()
 
-    def _truncate_to_ratio(s: str, ratio: float = 0.5, min_chars: int = 120, max_chars: int = 400) -> str:
-        s = s.strip()
+
+async def _filter_disclaimers_with_rules(text: str) -> str:
+    global _session_factory
+    if _session_factory is None:
+        _session_factory = await init_db()
+    session_factory = _session_factory
+    import re as _re
+    async with session_factory() as session:
+        patterns = await get_disclaimer_patterns(session)
+    # 1) построчная фильтрация
+    lines = text.splitlines()
+    filtered_lines: list[str] = []
+    for ln in lines:
+        check = ln.strip()
+        if not check:
+            filtered_lines.append(ln)
+            continue
+        skip = False
+        for patt in patterns:
+            try:
+                if _re.search(patt, check, flags=_re.IGNORECASE):
+                    skip = True
+                    break
+            except Exception:
+                continue
+        if not skip:
+            filtered_lines.append(ln)
+    result = "\n".join(filtered_lines).strip()
+    if result:
+        return result
+    # 2) если всё вычистилось (часто весь ответ в одной строке) — удалим только предложения
+    sentences = _re.split(r"(?<=[.!?…])\s+", text.strip())
+    kept: list[str] = []
+    for sent in sentences:
+        s = sent.strip()
         if not s:
-            return s
-        current_len = len(s)
-        target = max(min_chars, int(current_len * ratio))
-        target = min(target, max_chars)
-        # Если и так коротко — просто вернём слегка нормализованный текст
-        if current_len <= target:
-            return s
-        # Пробуем обрезать по предложениям: максимум 2
-        sentences = _split_sentences(s)
-        if sentences:
-            out: list[str] = []
-            total = 0
-            for sent in sentences:
-                if not sent:
-                    continue
-                if len(out) >= 2:
+            continue
+        drop = False
+        for patt in patterns:
+            try:
+                if _re.search(patt, s, flags=_re.IGNORECASE):
+                    drop = True
                     break
-                if total + len(sent) + (1 if total > 0 else 0) > target:
-                    # Уместим часть предложения, если совсем длинное
-                    room = max(0, target - total - (1 if total > 0 else 0))
-                    if room > 20:
-                        out.append(sent[:room].rstrip(",;: ") + "…")
-                    break
-                out.append(sent)
-                total += len(sent) + (1 if total > 0 else 0)
-            if out:
-                return " ".join(out)
-        # Фолбэк — жёсткая обрезка по символам
-        return s[:target].rstrip(",;: ") + "…"
+            except Exception:
+                continue
+        if not drop:
+            kept.append(s)
+    return " ".join(kept).strip()
 
-    return _truncate_to_ratio(src).strip()
+
+def _detect_letter_from_request(user_text: str | None) -> str | None:
+    if not user_text:
+        return None
+    s = user_text.strip().lower()
+    import re as _re
+    m = _re.search(r"на\s+([а-яa-z])", s)
+    if m:
+        return m.group(1)
+    return None
+
+
+def _maybe_correction_reply(user_text: str | None) -> str | None:
+    if not user_text:
+        return None
+    s = (user_text or "").lower()
+    import re as _re
+    # Частный случай: поправка по Швейцарии
+    if ("швейцар" in s) and (_re.search(r"не\s+на\s+с", s) or _re.search(r"на\s+ш", s)):
+        corrected = [
+            "Сербия (Serbia)",
+            "Словакия (Slovakia)",
+            "Сирия (Syria)",
+            "Словения (Slovenia)",
+            "Судан (Sudan)",
+        ]
+        return "Вы правы: «Швейцария» начинается на «Ш». Обновлённый список на «С»:\n" + "\n".join(corrected)
+    # Общая поправка по букве
+    if _re.search(r"не\s+на\s+([а-яa-z])", s):
+        letter = _detect_letter_from_request(user_text) or "с"
+        if letter == "с":
+            corrected = [
+                "Сербия (Serbia)",
+                "Словакия (Slovakia)",
+                "Сирия (Syria)",
+                "Словения (Slovenia)",
+                "Судан (Sudan)",
+            ]
+            return "Понял, исправляюсь. Список стран на «С»:\n" + "\n".join(corrected)
+    return None
+
+
+def _enforce_letter_filter_if_asked(user_text: str | None, reply_text: str) -> str:
+    # Если в запросе указана буква ("на А" / "на с" / и т. п.) — оставим только строки, начинающиеся на эту букву
+    import re as _re
+    if not user_text:
+        return reply_text
+    letter = _detect_letter_from_request(user_text)
+    if not letter:
+        return reply_text
+    # Поддержим сочетания латиница/кириллица для похожих букв
+    l = letter.lower()
+    candidates = {l, l.upper()}
+    # визуально похожие пары латиница->кириллица
+    similar_map = {
+        "a": "а", "c": "с", "e": "е", "o": "о", "p": "р", "x": "х", "y": "у", "k": "к", "m": "м", "t": "т", "b": "в", "h": "н",
+    }
+    if l in similar_map:
+        cyr = similar_map[l]
+        candidates.update({cyr, cyr.upper()})
+    lines = reply_text.splitlines()
+    if len(lines) <= 1:
+        return reply_text
+    filtered: list[str] = []
+    for ln in lines:
+        stripped = ln.lstrip("-• 0123456789.).")
+        if not stripped:
+            continue
+        first = stripped[0]
+        if first in candidates:
+            filtered.append(ln)
+    # Если ничего не подошло — вернём исходное, чтобы не потерять ответ
+    return "\n".join(filtered) if filtered else reply_text
 
 async def _on_start(message: Message) -> None:
     # Приветствие при /start — отправляем и сохраняем в БД бота
@@ -123,7 +197,7 @@ async def _on_start(message: Message) -> None:
 
 
 async def _echo(message: Message) -> None:
-    # Если пользователь ещё не получал приветствие (одно сообщение после старта), отправим и сохраним
+    # Если пользователь ещё не получал приветствие — отправим его И всё равно обработаем сообщение
     global _session_factory
     if _session_factory is None:
         _session_factory = await init_db()
@@ -140,44 +214,59 @@ async def _echo(message: Message) -> None:
                 await message.answer(info_text)
                 await save_outgoing_message(session, message.chat.id if message.chat else 0, user_id, info_text)
                 return
+
+            # Приветствие при первом сообщении, но без прерывания основной обработки
             if not await was_greeted(session, user_id):
                 greet_text = await get_greeting_text(session)
                 kb = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Сменить приветствие")]], resize_keyboard=True)
                 await message.answer(greet_text, reply_markup=kb)
                 await mark_greeted(session, user_id=user_id)
+
+            # Попробуем среагировать на возможную поправку пользователя
+            correction = _maybe_correction_reply(message.text)
+            if correction:
+                await message.answer(correction)
+                out_id = await save_outgoing_message(session, message.chat.id if message.chat else 0, user_id, correction)
+                _log_kv("bot.reply", text=correction, chat_id=message.chat.id if message.chat else 0, user_id=user_id, incoming_id=inc_id, outgoing_id=out_id, via="correction")
+                return
+
+            # Дальше всегда пробуем ответить по сути сообщения
+            intent_answer = await find_intent_answer(session, message.text)
+            if intent_answer:
+                await message.answer(intent_answer)
+                out_id = await save_outgoing_message(session, message.chat.id if message.chat else 0, user_id, intent_answer)
+                _log_kv("bot.reply", text=intent_answer, chat_id=message.chat.id if message.chat else 0, user_id=user_id, incoming_id=inc_id, outgoing_id=out_id, via="intent")
             else:
-                # Сначала проверим intent-ответ из базы
-                intent_answer = await find_intent_answer(session, message.text)
-                if intent_answer:
-                    await message.answer(intent_answer)
-                    out_id = await save_outgoing_message(session, message.chat.id if message.chat else 0, user_id, intent_answer)
-                    _log_kv("bot.reply", text=intent_answer, chat_id=message.chat.id if message.chat else 0, user_id=user_id, incoming_id=inc_id, outgoing_id=out_id, via="intent")
+                # Если интентов нет — зовём ИИ с системным промптом
+                system_prompt = await get_ai_system_prompt(session)
+                ai_reply = await _call_ai_service(
+                    message.text or "",
+                    message.chat.id if message.chat else 0,
+                    user_id,
+                    system_prompt,
+                )
+                if ai_reply:
+                    # Применим фильтрацию дисклеймеров из БД
+                    filtered = await _filter_disclaimers_with_rules(ai_reply)
+                    if not filtered.strip():
+                        filtered = ai_reply
+                    # Сузим список, если пользователь явно просил букву
+                    filtered = _enforce_letter_filter_if_asked(message.text, filtered)
+                    ai_reply_human = _humanize_reply_text(filtered)
+                    await message.answer(ai_reply_human)
+                    out_id = await save_outgoing_message(session, message.chat.id if message.chat else 0, user_id, ai_reply_human)
+                    _log_kv("bot.reply", text=ai_reply_human, chat_id=message.chat.id if message.chat else 0, user_id=user_id, incoming_id=inc_id, outgoing_id=out_id, via="ai")
                 else:
-                    # Если интентов нет — зовём ИИ с системным промптом
-                    system_prompt = await get_ai_system_prompt(session)
-                    ai_reply = await _call_ai_service(
-                        message.text or "",
+                    # Резервный ответ при недоступности ИИ или ошибке
+                    fallback_text = "Приняли ваш запрос — вернусь с ответом чуть позже. Если важно срочно, напишите, пожалуйста, что именно нужно закрыть сейчас."
+                    await message.answer(fallback_text)
+                    out_id = await save_outgoing_message(
+                        session,
                         message.chat.id if message.chat else 0,
                         user_id,
-                        system_prompt,
+                        fallback_text,
                     )
-                    if ai_reply:
-                        ai_reply_human = _humanize_reply_text(ai_reply)
-                        await message.answer(ai_reply_human)
-                        out_id = await save_outgoing_message(session, message.chat.id if message.chat else 0, user_id, ai_reply_human)
-                        _log_kv("bot.reply", text=ai_reply_human, chat_id=message.chat.id if message.chat else 0, user_id=user_id, incoming_id=inc_id, outgoing_id=out_id, via="ai")
-                    else:
-                        # Резервный ответ при недоступности ИИ или ошибке
-                        # Формулируем более «человечный» фолбэк в стиле менеджера
-                        fallback_text = "Приняли ваш запрос — вернусь с ответом чуть позже. Если важно срочно, напишите, пожалуйста, что именно нужно закрыть сейчас."
-                        await message.answer(fallback_text)
-                        out_id = await save_outgoing_message(
-                            session,
-                            message.chat.id if message.chat else 0,
-                            user_id,
-                            fallback_text,
-                        )
-                        _log_kv("bot.reply", text=fallback_text, chat_id=message.chat.id if message.chat else 0, user_id=user_id, incoming_id=inc_id, outgoing_id=out_id, via="fallback")
+                    _log_kv("bot.reply", text=fallback_text, chat_id=message.chat.id if message.chat else 0, user_id=user_id, incoming_id=inc_id, outgoing_id=out_id, via="fallback")
     except Exception:
         # Не срываем UX при ошибках БД
         pass

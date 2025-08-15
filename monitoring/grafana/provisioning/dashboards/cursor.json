@@ -130,7 +130,7 @@
       "options": {"showLabels": true, "showTime": true, "wrapLogMessage": true},
       "targets": [
         {
-          "expr": "{service=\"tg_bot\"} |~ \"bot\\.(question|reply)\"",
+          "expr": "{service=\"tg_bot\"} |~ \"bot\\\\.(question|reply)\"",
           "refId": "A",
           "datasource": {"type": "loki", "uid": "loki"}
         }
@@ -182,7 +182,7 @@
       "options": {"colorMode": "value"},
       "targets": [
         {
-          "expr": "sum(count_over_time({compose_project=~\".*\"} |~ \"(?i)error|exception|traceback\"[5m]))",
+          "expr": "sum(count_over_time({compose_project=~\".+\"} |~ \"(?i)error|exception|traceback\"[5m]))",
           "refId": "A",
           "datasource": {"type": "loki", "uid": "loki"}
         }

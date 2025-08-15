@@ -1,4 +1,5 @@
 {
+  "uid": "fev3c5naoavwgd",
   "annotations": {"list": []},
   "editable": true,
   "gnetId": null,
@@ -10,7 +11,7 @@
       "gridPos": {"x": 0, "y": 0, "w": 24, "h": 10},
       "targets": [
         {
-          "datasource": {"type": "loki", "uid": "Loki"},
+          "datasource": {"type": "loki", "uid": "loki"},
           "expr": "{service=\"tg_bot\"} |= \"bot.reply\"",
           "refId": "A"
         }

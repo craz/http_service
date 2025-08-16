@@ -7,6 +7,19 @@
   "panels": [
     {
       "type": "stat",
+      "title": "Targets up (Prometheus)",
+      "gridPos": {"x": 0, "y": 6, "w": 8, "h": 6},
+      "options": {"colorMode": "value"},
+      "targets": [
+        {
+          "expr": "sum(up)",
+          "refId": "A",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        }
+      ]
+    },
+    {
+      "type": "stat",
       "title": "HTTP Requests (http_service)",
       "gridPos": {"x": 0, "y": 0, "w": 8, "h": 6},
       "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto"},
@@ -185,6 +198,141 @@
           "expr": "sum(count_over_time({compose_project=~\".+\"} |~ \"(?i)error|exception|traceback\"[5m]))",
           "refId": "A",
           "datasource": {"type": "loki", "uid": "loki"}
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Active Containers",
+      "gridPos": {"x": 8, "y": 58, "w": 8, "h": 6},
+      "options": {"colorMode": "value", "graphMode": "area"},
+      "targets": [
+        {
+          "expr": "count(container_last_seen)",
+          "refId": "A",
+          "datasource": {"type": "prometheus", "uid": "prometheus"}
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Container Status Overview",
+      "gridPos": {"x": 16, "y": 58, "w": 8, "h": 12},
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Container Name"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "expr": "container_last_seen",
+          "refId": "A",
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "logs",
+      "title": "Container Status Logs",
+      "gridPos": {"x": 0, "y": 70, "w": 24, "h": 10},
+      "options": {"showLabels": true, "showTime": true, "wrapLogMessage": true},
+      "targets": [
+        {
+          "expr": "{compose_project=~\".+\"} |~ \"container|docker|status\"",
+          "refId": "A",
+          "datasource": {"type": "loki", "uid": "loki"}
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Container CPU Usage",
+      "gridPos": {"x": 0, "y": 80, "w": 12, "h": 8},
+      "options": {
+        "legend": {"showLegend": true},
+        "tooltip": {"mode": "single"}
+      },
+      "targets": [
+        {
+          "expr": "rate(container_cpu_usage_seconds_total{container!=\"\"}[5m]) * 100",
+          "refId": "A",
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "legendFormat": "{{container_name}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Container Memory Usage",
+      "gridPos": {"x": 12, "y": 80, "w": 12, "h": 8},
+      "options": {
+        "legend": {"showLegend": true},
+        "tooltip": {"mode": "single"}
+      },
+      "targets": [
+        {
+          "expr": "container_memory_usage_bytes{container!=\"\"} / 1024 / 1024",
+          "refId": "A",
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "legendFormat": "{{container_name}} (MB)"
         }
       ]
     }

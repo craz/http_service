@@ -208,7 +208,7 @@
       "options": {"colorMode": "value", "graphMode": "area"},
       "targets": [
         {
-          "expr": "count(container_last_seen)",
+          "expr": "count(container_cpu_usage_seconds_total{id=~\"/docker/.*\"})",
           "refId": "A",
           "datasource": {"type": "prometheus", "uid": "prometheus"}
         }
@@ -223,13 +223,13 @@
         "sortBy": [
           {
             "desc": false,
-            "displayName": "Container Name"
+            "displayName": "Container ID"
           }
         ]
       },
       "targets": [
         {
-          "expr": "container_last_seen",
+          "expr": "container_cpu_usage_seconds_total{id=~\"/docker/.*\"}",
           "refId": "A",
           "datasource": {"type": "prometheus", "uid": "prometheus"},
           "format": "table",
@@ -312,10 +312,10 @@
       },
       "targets": [
         {
-          "expr": "rate(container_cpu_usage_seconds_total{container!=\"\"}[5m]) * 100",
+          "expr": "rate(container_cpu_usage_seconds_total{id=~\"/docker/.*\"}[5m]) * 100",
           "refId": "A",
           "datasource": {"type": "prometheus", "uid": "prometheus"},
-          "legendFormat": "{{container_name}}"
+          "legendFormat": "{{id}}"
         }
       ]
     },
@@ -329,10 +329,10 @@
       },
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{container!=\"\"} / 1024 / 1024",
+          "expr": "container_memory_usage_bytes{id=~\"/docker/.*\"} / 1024 / 1024",
           "refId": "A",
           "datasource": {"type": "prometheus", "uid": "prometheus"},
-          "legendFormat": "{{container_name}} (MB)"
+          "legendFormat": "{{id}} (MB)"
         }
       ]
     },
@@ -346,16 +346,16 @@
       },
       "targets": [
         {
-          "expr": "rate(container_network_receive_bytes_total{container!=\"\"}[5m]) / 1024 / 1024",
+          "expr": "rate(container_network_receive_bytes_total{id=~\"/docker/.*\"}[5m]) / 1024 / 1024",
           "refId": "A",
           "datasource": {"type": "prometheus", "uid": "prometheus"},
-          "legendFormat": "{{container_name}} RX (MB/s)"
+          "legendFormat": "{{id}} RX (MB/s)"
         },
         {
-          "expr": "rate(container_network_transmit_bytes_total{container!=\"\"}[5m]) / 1024 / 1024",
+          "expr": "rate(container_network_transmit_bytes_total{id=~\"/docker/.*\"}[5m]) / 1024 / 1024",
           "refId": "B",
           "datasource": {"type": "prometheus", "uid": "prometheus"},
-          "legendFormat": "{{container_name}} TX (MB/s)"
+          "legendFormat": "{{id}} TX (MB/s)"
         }
       ]
     }
